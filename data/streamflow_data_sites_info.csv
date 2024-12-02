@@ -1,0 +1,13 @@
+# --------------------------------------------------
+# nrow : 4
+# ncol : 4
+# author : Julien Lerat, CSIRO Enviromment
+# description : Streamflow sites meta data extracted from WaterNSW website (https://realtimedata.waternsw.com.au/)
+# reference : Lerat and Vaze (2024), Nature, submitted
+# time_generated : 2024-12-02 16:19:50
+# --------------------------------------------------
+STATIONID,LONGITUDE[deg],LATITUDE[deg],NAME,CATCHMENTAREA[km2]
+138110,152.70464,-26.62741,Mary River At Bellbird Creek,486.00000
+202001,153.45818,-28.53117,Brunswick River At Durrumbul (Sherrys Crossing),34.00000
+203014,153.39483,-28.75557,Wilsons River At Eltham,223.00000
+203010,153.16324,-28.73640,Leycester River At Rock Valley,179.00000
