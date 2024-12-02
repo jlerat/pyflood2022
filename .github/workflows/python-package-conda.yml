@@ -1,0 +1,44 @@
+name: Build pyflood2022
+
+on: [push]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      max-parallel: 5
+    
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.10'
+     
+      - name: Add conda to system path
+        run: |
+          # $CONDA is an environment variable pointing to the root of the miniconda directory
+          echo $CONDA/bin >> $GITHUB_PATH
+      
+      - name: Create conda environment if needed
+        run: |
+           source $CONDA/etc/profile.d/conda.sh
+           conda env create -f env_tiny.yml
+
+      - name: Run scripts
+        run: |
+          source $CONDA/etc/profile.d/conda.sh
+          conda activate env_tiny
+          cd $GITHUB_WORKSPACE
+
+          echo "--- Run scripts from $PWD ---"
+          python scripts/map_plot.py
+          python scripts/propag_plot.py
+          python scripts/scatter_plot.py
+          python scripts/surprise_plot.py
+        
