@@ -38,9 +38,6 @@ import matplotlib.transforms as mtransforms
 import matplotlib.patheffects as pe
 from matplotlib import ticker
 
-from hydrodiy.plot import boxplot
-
-
 def plot_line(ax, slope, x0, y0, *args, **kwargs):
     xa, xb = ax.get_xlim()
     ylim = ax.get_ylim()
