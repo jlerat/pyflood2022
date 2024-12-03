@@ -47,47 +47,37 @@ def get_shortname(name):
     return s.title()
 
 
-def plot_rivers(ax, fshp_rivers, *args, **kwargs):
+def plot_shape(ax, fshp, *args, **kwargs):
     lines = {}
     kwargs["lw"] = kwargs.get("lw", 0.4)
     kwargs["color"] = kwargs.get("color", "#00a9ce")
     name_filter = kwargs.get("name_filter", ".*")
+    max_dist = kwargs.get("max_dist", 0.05)
     if "name_filter" in kwargs:
         kwargs.pop("name_filter")
     xlim = ax.get_xlim()
     ylim = ax.get_ylim()
-    with shapefile.Reader(str(fshp_rivers), "r") as shp:
+    with shapefile.Reader(str(fshp), "r") as shp:
         nsh = len(shp.shapes())
         for ish, shrec in enumerate(shp.shapeRecords()):
             dd = shrec.record.as_dict()
-            name = dd["NAME"]
+            name = dd.get("NAME", f"shape{ish}")
             if not re.search(name_filter, name):
                 continue
 
             line = np.ascontiguousarray(np.array(shrec.shape.points))
-            ax.plot(line[:, 0], line[:, 1], *args, **kwargs)
-
-            lines[name] = ax.get_lines()[-1]
+            dist = np.sqrt(((line[1:]-line[:-1])**2).sum(axis=1))
+            starts = [[0], np.where(dist>max_dist)[0]+1, [len(line)-1]]
+            starts = np.concatenate(starts)
+            for istart, start in enumerate(starts[:-1]):
+                end = starts[istart+1]
+                ax.plot(line[start:end, 0], line[start:end, 1], *args, **kwargs)
+                lines[f"{name}_{istart}"] = ax.get_lines()[-1]
 
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
 
     return lines
-
-
-def plot_coast(ax, fshp_coast, *args, **kwargs):
-    kwargs["lw"] = kwargs.get("lw", 1.)
-    kwargs["color"] = kwargs.get("color", "k")
-    xlim = ax.get_xlim()
-    ylim = ax.get_ylim()
-    with shapefile.Reader(str(fshp_coast), "r") as shp:
-        nsh = len(shp.shapes())
-        for ish, shrec in enumerate(shp.shapeRecords()):
-            line = np.ascontiguousarray(np.array(shrec.shape.points))
-            ax.plot(line[:, 0], line[:, 1], *args, **kwargs)
-
-    ax.set_xlim(xlim)
-    ax.set_ylim(ylim)
 
 
 def plot_cities(ax, cities, text_kwargs={}):
@@ -177,7 +167,9 @@ def main():
 
     fshp_rivers = fsrc / "main_rivers_NSW+QLD_simplified4.shp"
 
-    fshp_coast = fsrc / "ne_10m_admin_0_countries_australia.shp"
+    fshp_coast = fsrc / "australia.shp"
+    fshp_coast_nr = fsrc / "australia_northern_rivers.shp"
+    fshp_border = fsrc / "NSW_QLD_border.shp"
 
     #----------------------------------------------------------------------
     # @Get data
@@ -273,7 +265,8 @@ def main():
 
                 sname = get_shortname(sinfo.NAME)
                 title = f"({letters[iax]}) {sname} ({area:0.0f} km$^2$)"
-                ax.set(ylabel=r"streamflow [m$^3$ s$^{-1}$]", title=title)
+                ax.set(xlabel="", ylabel=r"streamflow [m$^3$ s$^{-1}$]", \
+                                    title=title)
                 ax.yaxis.set_major_locator(ticker.MaxNLocator(4))
 
                 axmap = axs["grid_rain"]
@@ -333,11 +326,15 @@ def main():
             norm = BoundaryNorm(bounds, 256)
             levels = np.linspace(vmin, bounds[-1], 200)
 
+            # Map background
             # .. coast
-            plot_coast(ax, fshp_coast)
+            plot_shape(ax, fshp_coast_nr, color="k", lw=1.2)
+            # .. NSW/QLD border
+            plot_shape(ax, fshp_border, color="k", linestyle="--", lw=1.2)
+            ax.plot([], [], "k--", lw=1.2, label="QLD/NSW border")
 
             # .. rivers
-            plot_rivers(ax, fshp_rivers, lw=1.5, color="0.1")
+            plot_shape(ax, fshp_rivers, lw=1.5, color="0.1")
 
             if aname == "grid_sm":
                 backcol = dict(Wilsons="tab:green", Richmond="tab:orange",\
@@ -345,15 +342,14 @@ def main():
                 for rn in ["Wilsons", "Richmond", "Mary"]:
                     fn = f"RIVERS|{rn}"
                     backc = backcol[rn]
-                    plot_rivers(ax, fshp_rivers, name_filter=rn, lw=4, color=backc)
-                    plot_rivers(ax, fshp_rivers, name_filter=rn, lw=1.5, color="k")
+                    plot_shape(ax, fshp_rivers, name_filter=rn, lw=4, color=backc)
+                    plot_shape(ax, fshp_rivers, name_filter=rn, lw=1.5, color="k")
                     ax.plot([], [], "-", lw=4, color=backc, label=f"{rn} River")
 
             # .. towns
             if aname == "grid_sm":
                 plot_cities(ax, cities=towns_top, text_kwargs=cities_top_kwargs)
                 plot_cities(ax, cities=towns_below, text_kwargs=cities_below_kwargs)
-
 
             # .. surface data
             cnt = ax.contourf(llons, llats, toplot, \
@@ -390,8 +386,8 @@ def main():
                 title = f"({letters[iax]}) Maximum {dur}h total rainfall\n"
             else:
                 txt = time_awra.strftime("%d %b")
-                title = f"({letters[iax]}) Saturation of soil column\n"\
-                            +f"up to 1m depth\non {txt}"
+                title = f"({letters[iax]}) Saturation of soil column"\
+                            +f" (1m depth)\non {txt}"
 
             ax.set_title(title, fontsize=15)
             ax.xaxis.set_major_locator(ticker.MaxNLocator(3))
@@ -408,7 +404,7 @@ def main():
                 axi = ax.inset_axes([0.55, 0, 0.45, 0.12])
                 axi.plot([x0, x1, x1, x0, x0], \
                             [y0, y0, y1, y1, y0], "-", lw=6, color="tab:red")
-                plot_coast(axi, fshp_coast, color="k", lw=1)
+                plot_shape(axi, fshp_coast, color="k", lw=1)
                 axi.set(xticks=[], yticks=[])
                 axi.axis("equal")
             else:

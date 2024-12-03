@@ -39,9 +39,9 @@ def main():
     aheight = 6
     fdpi = 300
 
-    cz = "PEAK_DOWN"
     cx = "PEAK_TIME_DIFF"
     cy = "ATTENUATION_UP_DOWN"
+    cz = "PEAK_DOWN"
 
     labels = {
         "ATTENUATION_UP_DOWN": "Peak attenuation\n{uname}/{dname} [m]", \
@@ -108,7 +108,7 @@ def main():
         pro = propag.loc[idx].set_index("PEAK_DOWN_TIME")
         pro = pro.sort_index()
 
-        fd = fimg / f"FIGD_propag_{pair}.csv"
+        fd = fimg / f"propag_{pair}.csv"
         pro.to_csv(fd)
 
         x = pro.loc[:, cx]
@@ -124,7 +124,7 @@ def main():
         # Minimum water level to display flood name
         cuts = sites["flood_thresholds"].get(downid)
         if cuts is None:
-            wmin_label = w.quantile(0.9)
+            wmin_label = w.quantile(0.8)
         else:
             wmin_label = cuts[1]
 
@@ -132,7 +132,7 @@ def main():
         plt.close("all")
         fig = plt.figure(figsize=(awidth, aheight), \
                                 layout="tight")
-        ax = fig.add_subplot(1, 2, 1, projection="3d")
+        ax = fig.add_subplot(1, 1, 1, projection="3d")
 
         zmin = int(z.min())-1
         for xx, yy, zz, ww, tt, nn in zip(x, y, z, w, t, \
@@ -160,15 +160,28 @@ def main():
             if nn=="nan":
                 continue
 
-            if ww>wmin_label or tt<5:
-                fz = 14 if nn=="Feb22" else 10
-                coltxt = "tab:red" if nn=="Feb22" else "0.1"
-                npre, npost = 0, 2
-                txt = f"{' '*npre}{nn}{' '*npost}", "z"
-                ax.text(xx, yy, zz, txt, \
+            if ww>wmin_label:
+                mth = re.sub("[0-9]+", "", nn)
+                yr = re.sub(mth, "", nn, re.IGNORECASE)
+
+                if nn=="Feb22":
+                    fz = 14
+                    coltxt = "tab:red"
+                    txt = f"{mth}\n{yr}"
+                    rotation = 0
+                    zztxt = zz+0.2
+                else:
+                    fz = 10
+                    coltxt = "0.1"
+                    txt = f"{mth} {yr}"
+                    rotation = 90
+                    zztxt = zz
+
+                ax.text(xx, yy, zztxt, txt, \
                             va="bottom", \
                             ha="center", \
                             color=coltxt, \
+                            rotation=rotation, \
                             fontweight="bold", \
                             fontsize=fz)
 
@@ -186,15 +199,16 @@ def main():
         ax.xaxis.set_major_locator(ticker.MaxNLocator(5))
         ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
         ax.zaxis.set_major_locator(ticker.MaxNLocator(5))
+        ax.view_init(elev=20., azim=-60, roll=0)
 
         if pair == "203402_203014":
-            axi = ax.inset_axes((0.41, 0.62, 0.58, 0.38), \
+            axi = ax.inset_axes((0.52, 0.66, 0.48, 0.38), \
                             transform=fig.transFigure)
             fp = fdata / "Eltham2Woodlawn_map_v2.png"
             axi.imshow(mpimg.imread(fp))
             axi.axis("off")
 
-        fp = fimg / f"FIGD_propag_{pair}.{imgext}"
+        fp = fimg / f"propag_{pair}.{imgext}"
         fig.savefig(fp, dpi=fdpi)
 
 

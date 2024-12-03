@@ -179,7 +179,7 @@ def main():
         xlabel = "Dist Coast [km]" if varexplain == "coastdist" \
                     else "Catchment Area [km$^2$]"
 
-        unit = r"m$^3$ s$^{-1}$ km$^{-2}$" if varname.startswith("SPECIFIG") else "mm"
+        unit = r"m$^3$ s$^{-1}$ km$^{-2}$" if varname.startswith("SPECIFIC") else "mm"
 
         vartxt = varname.lower()
         if re.search("specific", vartxt):
@@ -224,7 +224,8 @@ def main():
 
         # Reference envelop curves
         x0, x1 = ax.get_xlim()
-        if re.search("specificflow_peak", vartxt) and varexplain=="area" and not xy_config:
+        if re.search("specificflow_peak", vartxt) \
+                            and varexplain=="CATCHMENTAREA":
             xx = np.logspace(math.log10(x0), math.log10(x1), 500)
 
             # See Table 1 in
@@ -250,12 +251,12 @@ def main():
 
         ax.legend(loc=4, fontsize="large", framealpha=0.8)
 
-        if re.search("specificflow_peak_ams", vartxt):
+        if re.search("specificflow_peak", vartxt):
             ax.set_ylim((5e-3, 1e2))
 
         elif re.search("runoff_", vartxt):
             _, y1 = ax.get_ylim()
-            ax.set_ylim((1, y1))
+            ax.set_ylim((10, y1))
 
     fp = fimg / f"FIGB_scatterplots.{imgext}"
     fig.savefig(fp, dpi=fdpi)

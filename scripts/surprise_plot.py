@@ -27,6 +27,7 @@ import numpy as np
 import pandas as pd
 
 import matplotlib as mpl
+
 # Select backend
 mpl.use("Agg")
 
@@ -37,7 +38,19 @@ import matplotlib.transforms as mtransforms
 import matplotlib.patheffects as pe
 from matplotlib import ticker
 
-from hydrodiy.plot import putils, violinplot, boxplot
+from hydrodiy.plot import boxplot
+
+
+def plot_line(ax, slope, x0, y0, *args, **kwargs):
+    xa, xb = ax.get_xlim()
+    ylim = ax.get_ylim()
+    ya = slope*(xa-x0)+y0
+    yb = slope*(xb-x0)+y0
+    ax.plot([xa, xb], [ya, yb], *args, **kwargs)
+
+    ax.set_xlim((xa, xb))
+    ax.set_ylim(ylim)
+
 
 def format_spines(ax):
     xtks = ax.get_xticks()
@@ -61,7 +74,7 @@ def format_spines(ax):
     ax.set_yticks(ytks)
     ax.spines.left.set_bounds(y0, y1)
 
-    putils.line(ax, 1, 0, 0, 0, "k-", lw=0.7)
+    plot_line(ax, 0, 0, 0, "k-", lw=0.7)
 
     # Hide the right and top spines
     ax.spines.right.set_visible(False)
@@ -90,6 +103,8 @@ def main():
     ]
 
     censored = False
+
+    show_points = False
 
     cn_surprise = "Q100-SURPRISE"
 
@@ -170,11 +185,11 @@ def main():
             else:
                 counts = counts.sort_values("diff", ascending=False)
 
-            fc = fe.parent / f"{fe.stem}_counts_{cn}.csv"
+            fc = fimg / f"{fe.stem}_C{censored}_counts_{cn}.csv"
             counts.to_csv(fc)
 
         # Fig dimensions
-        mosaic = [[f"{va}/ts"] for va in varnames]
+        mosaic = [[vn] for vn in varnames]
         ncols, nrows = len(mosaic[0]), len(mosaic)
 
         plt.close("all")
@@ -188,13 +203,13 @@ def main():
         highlighted_any = set()
 
         # Plot
-        for iax, (aname, ax) in enumerate(axs.items()):
-            varname, _ = aname.split("/")
-
+        for iax, (varname, ax) in enumerate(axs.items()):
             # Get surprise data
-            col_value = next(cn for cn in eventdata.columns \
-                                        if re.search(varname, cn))
-            mfdata = pd.pivot_table(eventdata, index="SITEID", \
+            vn = re.sub("SPECIFIC", "", varname)
+            vn = re.sub("RUNOFF", "VOL", vn)
+            col_value = next(cn for cn in edata.columns \
+                                        if re.search(vn, cn))
+            mfdata = pd.pivot_table(edata, index="SITEID", \
                                     columns="MAJOR_FLOOD", \
                                     values=col_value)
 
@@ -204,62 +219,74 @@ def main():
                     mfdata.loc[:, cn] = np.nan
 
             mfdata = mfdata.loc[:, major_floods.index]
-            mfdata.columns = major_floods.SHORTNAME
+            mfdata.columns = [re.sub("-.*", "", n) \
+                                for n in major_floods.SHORTNAME]
 
-            # box plot
-            bp = boxplot.Boxplot(mfdata, \
-                            style="narrow", \
-                            show_median=False,\
-                            show_text=False)
-            bp.draw(ax=ax)
-
-            # color NR 22
-            st = bp.stats
-            colms = st.columns
-            highlighted = st.loc["mean", colms!=fname_22].nlargest(4).index.tolist()
+            # Highlighted floods
+            means = mfdata.mean()
+            highlighted = means[means.index!=fname_22].nlargest(4).index.tolist()
             highlighted += [fname_22]
-
             highlighted_any.update(set(highlighted))
 
-            x0, x1 = ax.get_xlim()
-            y0, y1 = ax.get_ylim()
-            for fn in highlighted:
-                col = color_22 if fn == fname_22 else color_others
-                bp.set_color(fn, col, alpha=0.9)
+            # Boxplot
+            xtk = np.arange(mfdata.shape[1])
+            xlim = xtk[0]-0.5, xtk[-1]+0.5
 
-                ct = bp.stats.loc["count", fn]
-                m = bp.stats.loc["mean", fn]+(y1-y0)/50
-                x = colms.get_loc(fn)
-                ax.text(x, m, f"{m:0.2f}", color=col, fontweight="bold", \
-                                va="bottom", ha="center", fontsize=14, \
-                                path_effects=[pe.withStroke(linewidth=6, \
-                                                    foreground="w")])
+            for ifn, (fn, se) in enumerate(mfdata.items()):
+                # .. colors
+                col = "tab:blue"
+                if fn in highlighted:
+                    col = color_22 if fn==fname_22 else color_others
 
+                wl, q1, med, q3, wh = se.quantile([0.05, 0.25, 0.5, 0.75, 0.95])
+                mean = se.mean()
+
+                # .. points
+                x = xtk[ifn]
+                if show_points:
+                    xx = x+0.1*np.random.uniform(-1, 1, len(se))
+                    ax.plot(xx, se, "o", ms=2, mfc="k", mec="k", alpha=0.2)
+
+                # .. Feb22 highlight
                 if fn == fname_22:
-                    v = bp.stats.loc[["25.0%", "75.0%"], fn].values
-                    ll = (x0, v[0])
-                    width  = x1-x0
-                    height = v[1]-v[0]
-                    rect = Rectangle(ll, width, height, \
+                    rec = Rectangle((xlim[0], q1), xlim[1]-xlim[0], q3-q1, \
                                         facecolor=col, alpha=0.2)
-                    ax.add_patch(rect)
+                    ax.add_patch(rec)
+                    ax.plot(xlim, [mean, mean], color=col, lw=1)
 
-                    m = bp.stats.loc["mean", fn]
-                    putils.line(ax, 1, 0, 0, m, lw=0.5, color=col)
+                # .. whiskers
+                dx = 0.2
+                rec = Rectangle((x-dx/2, wl), dx, wh-wl,\
+                                    facecolor=col, alpha=0.8)
+                ax.add_patch(rec)
+                # .. boxes
+                dx = 0.8
+                rec = Rectangle((x-dx/2, q1), dx, q3-q1,\
+                                    facecolor=col, alpha=0.95)
+                ax.add_patch(rec)
+                # .. means
+                ax.plot(x, mean, "o", mec=col, mfc="w", lw=2)
+                if fn in highlighted:
+                    dy = 0.01
+                    ax.text(x, mean+dy, f"{mean:0.2f}", color=col, fontweight="bold", \
+                            va="bottom", ha="center", fontsize=14, \
+                            path_effects=[pe.withStroke(linewidth=6, \
+                                                foreground="w")])
 
-            y0 = max(-0.2, y0)
-            #y1 = max(y1, topn.max()*1.1)
+            y0, y1 = -0.1, 0.4
             ax.set_ylim((y0, y1))
 
             # decorate
-            ax.set_xticks(np.arange(mfdata.shape[1]))
-            if aname==mosaic[-1][0]:
-                ax.set_xticklabels(mfdata.columns)
+            if varname==mosaic[-1][0]:
+                ax.set_xticks(xtk)
+                ax.set_xticklabels(mfdata.columns.to_list())
                 ax.tick_params(axis="x", labelrotation=90)
             else:
                 ax.set_xticklabels([])
                 ax.set_xticks([])
                 ax.spines.bottom.set_visible(False)
+
+            ax.set_xlim(xlim)
 
             # Format spines
             format_spines(ax)
