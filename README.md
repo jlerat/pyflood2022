@@ -1,4 +1,4 @@
-[![Build pyflood2022](https://github.com/jlerat/pyflood2022/actions/workflows/python-package-conda.yml/badge.svg?branch=master)](https://github.com/jlerat/pyflood2022/actions/workflows/python-package-conda.yml)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14271026.svg)](https://doi.org/10.5281/zenodo.14271026) [![Build pyflood2022](https://github.com/jlerat/pyflood2022/actions/workflows/python-package-conda.yml/badge.svg?branch=master)](https://github.com/jlerat/pyflood2022/actions/workflows/python-package-conda.yml)
 
 # pyflood2022
 
