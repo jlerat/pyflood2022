@@ -61,7 +61,13 @@ def plot_shape(ax, fshp, *args, **kwargs):
         nsh = len(shp.shapes())
         for ish, shrec in enumerate(shp.shapeRecords()):
             dd = shrec.record.as_dict()
-            name = dd.get("NAME", f"shape{ish}")
+            if ish==0:
+                try:
+                    cname = next(cn for cn in dd.keys()\
+                             if re.search("name", cn, re.IGNORECASE))
+                except:
+                    cname = "bidule"
+            name = dd.get(cname, f"shape{ish}")
             if not re.search(name_filter, name):
                 continue
 
@@ -141,6 +147,12 @@ def main():
     awidth = 6
     aheight = awidth*0.9*(y1-y0)/(x1-x0)/len(mosaic) # Equal scale
 
+    col_rivers = {
+        "Wilsons": "tab:green", \
+        "Richmond": "tab:orange", \
+        "Mary": "pink"
+    }
+
     cities_below_kwargs = dict(
         path_effects=[patheff.withStroke(linewidth=4, foreground="w")], \
         textcoords="offset pixels", \
@@ -170,6 +182,7 @@ def main():
     fshp_coast = fsrc / "gis" / "australia.shp"
     fshp_coast_nr = fsrc / "gis" / "australia_northern_rivers.shp"
     fshp_border = fsrc / "gis" / "NSW_QLD_border.shp"
+    fshp_catch = fsrc / "gis" / "catchment_boundaries.shp"
 
     #----------------------------------------------------------------------
     # @Get data
@@ -337,14 +350,21 @@ def main():
             plot_shape(ax, fshp_rivers, lw=1.5, color="0.1")
 
             if aname == "grid_sm":
-                backcol = dict(Wilsons="tab:green", Richmond="tab:orange",\
-                        Mary="tab:pink")
                 for rn in ["Wilsons", "Richmond", "Mary"]:
                     fn = f"RIVERS|{rn}"
-                    backc = backcol[rn]
-                    plot_shape(ax, fshp_rivers, name_filter=rn, lw=4, color=backc)
+                    backc = col_rivers[rn]
+                    plot_shape(ax, fshp_rivers, name_filter=rn, lw=6, color=backc)
                     plot_shape(ax, fshp_rivers, name_filter=rn, lw=1.5, color="k")
-                    ax.plot([], [], "-", lw=4, color=backc, label=f"{rn} River")
+                    label = f"{rn} River"
+                    ax.plot([], [], "-", lw=6, color=backc, label=label)
+
+                    if rn != "Wilsons":
+                        plot_shape(ax, fshp_catch, name_filter=rn.upper(), \
+                                        color=backc, linestyle="-", lw=2)
+                        label = f"{rn} Catchment"
+                        ax.plot([], [], "-", lw=2, color=backc, label=label)
+
+
 
             # .. towns
             if aname == "grid_sm":
