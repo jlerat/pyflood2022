@@ -165,17 +165,17 @@ def main():
     for f in fimg.glob("*.png"):
         f.unlink()
 
-    fshp_rivers = fsrc / "main_rivers_NSW+QLD_simplified4.shp"
+    fshp_rivers = fsrc / "gis" / "main_rivers_NSW+QLD_simplified4.shp"
 
-    fshp_coast = fsrc / "australia.shp"
-    fshp_coast_nr = fsrc / "australia_northern_rivers.shp"
-    fshp_border = fsrc / "NSW_QLD_border.shp"
+    fshp_coast = fsrc / "gis" / "australia.shp"
+    fshp_coast_nr = fsrc / "gis" / "australia_northern_rivers.shp"
+    fshp_border = fsrc / "gis" / "NSW_QLD_border.shp"
 
     #----------------------------------------------------------------------
     # @Get data
     #----------------------------------------------------------------------
     # Towns
-    towns = pd.read_csv(fsrc / "main_towns.csv", skiprows=8)
+    towns = pd.read_csv(fsrc / "gis" / "main_towns.csv", skiprows=8)
     idx = (towns.xcoord>=x0)&(towns.xcoord<=x1)\
             & (towns.ycoord>=y0)&(towns.ycoord<=y1)\
             & (towns.POPULATION_MIN>=10000)\
@@ -199,14 +199,14 @@ def main():
         if aname.startswith("grid"):
             continue
         siteid = re.sub(".*_", "", aname)
-        f = fsrc / f"streamflow_data_{siteid}.csv"
+        f = fsrc / "floods" / f"streamflow_data_{siteid}.csv"
         df = pd.read_csv(f, index_col=0, parse_dates=True, \
                             skiprows=8)
         se = df.loc[:, "STREAMFLOW[m3/sec]"]
         flows[siteid] = se
 
     # -- AWRA --
-    fnc = fsrc / "awral_data.nc"
+    fnc = fsrc / "floods" / "awral_data.nc"
     with Dataset(fnc, "r") as nc:
         argrid = nc["awral_data"][:].filled()
         arvarnames = nc["variable"][:].tolist()
@@ -217,7 +217,7 @@ def main():
         arllats = nc["latitude"][:].filled()
 
     # -- AWAP --
-    fnc = fsrc / "awap_data.nc"
+    fnc = fsrc / "floods" / "awap_data.nc"
     with Dataset(fnc, "r") as nc:
         awgrid = nc["awap_daily_rainfall"][:].filled()
         awllons = nc["longitude"][:].filled()

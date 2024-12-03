@@ -89,19 +89,18 @@ def set_logscale(ax):
     ax.set_yticklabels(yticklabs)
 
 
-def main():
+def main(censored, hide_points):
     #----------------------------------------------------------------------
     # Config
     #----------------------------------------------------------------------
+    print(f"Censored = {censored}")
+    print(f"Hide points = {hide_points}\n")
+
     varnames = [
         "SPECIFICFLOW_PEAK", \
         "RUNOFF_120H", \
         "RUNOFF_240H"
     ]
-
-    censored = False
-
-    show_points = False
 
     cn_surprise = "Q100-SURPRISE"
 
@@ -141,11 +140,12 @@ def main():
     sites = pd.read_csv(fs, index_col="STATIONID", skiprows=8)
 
     # Flood event data
-    fe = fsrc / "flood_data_censored.zip" if censored else fsrc / "flood_data.zip"
+    fe = fsrc / "floods" / "flood_data_censored.zip" if censored \
+            else fsrc / "floods" / "flood_data.zip"
     eventdata = pd.read_csv(fe, dtype={"siteid": str}, skiprows=8)
 
     # Major australian floods
-    fm = fsrc / "major_floods.csv"
+    fm = fsrc / "floods" / "major_floods.csv"
     major_floods = pd.read_csv(fm, index_col="FLOODID", \
                             parse_dates=["START_DATE", "END_DATE"], \
                             skiprows=8)
@@ -238,12 +238,6 @@ def main():
                 wl, q1, med, q3, wh = se.quantile([0.05, 0.25, 0.5, 0.75, 0.95])
                 mean = se.mean()
 
-                # .. points
-                x = xtk[ifn]
-                if show_points:
-                    xx = x+0.1*np.random.uniform(-1, 1, len(se))
-                    ax.plot(xx, se, "o", ms=2, mfc="k", mec="k", alpha=0.2)
-
                 # .. Feb22 highlight
                 if fn == fname_22:
                     rec = Rectangle((xlim[0], q1), xlim[1]-xlim[0], q3-q1, \
@@ -252,25 +246,33 @@ def main():
                     ax.plot(xlim, [mean, mean], color=col, lw=1)
 
                 # .. whiskers
-                dx = 0.2
-                rec = Rectangle((x-dx/2, wl), dx, wh-wl,\
-                                    facecolor=col, alpha=0.8)
-                ax.add_patch(rec)
+                x = xtk[ifn]
+                dx = 0.3
+                #rec = Rectangle((x-dx/2, wl), dx, wh-wl,\
+                #                    facecolor=col, alpha=0.6)
+                #ax.add_patch(rec)
                 # .. boxes
-                dx = 0.8
+                dx = 0.9
                 rec = Rectangle((x-dx/2, q1), dx, q3-q1,\
-                                    facecolor=col, alpha=0.95)
+                                    facecolor=col, alpha=1.0)
                 ax.add_patch(rec)
+
+                # .. points
+                dx = 0.3
+                if not hide_points:
+                    xx = x+dx/2*np.random.uniform(-1, 1, len(se))
+                    ax.plot(xx, se, "o", ms=6, mfc=col, mec="w", alpha=0.5)
+
                 # .. means
-                ax.plot(x, mean, "o", mec=col, mfc="w", lw=2)
+                ax.plot(x, mean, "o", mec=col, ms=8, mfc="w", lw=2)
                 if fn in highlighted:
                     dy = 0.01
                     ax.text(x, mean+dy, f"{mean:0.2f}", color=col, fontweight="bold", \
-                            va="bottom", ha="center", fontsize=14, \
-                            path_effects=[pe.withStroke(linewidth=6, \
+                            va="bottom", ha="center", fontsize=15, \
+                            path_effects=[pe.withStroke(linewidth=7, \
                                                 foreground="w")])
 
-            y0, y1 = -0.1, 0.4
+            y0, y1 = (-0.1, 0.4) if marginal=="GEV" else (-0.2, 0.5)
             ax.set_ylim((y0, y1))
 
             # decorate
@@ -334,9 +336,21 @@ def main():
             fig.add_artist(con)
 
         fp = fimg / (f"surprise"+\
-                f"_{marginal}_C{censored}.png")
+                f"_{marginal}_C{int(censored)}_H{int(hide_points)}.png")
         fig.savefig(fp, dpi=fdpi)
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(\
+        description="Surprise index figure", \
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument("-c", "--censored", help="Use censored data", \
+                        action="store_true", default=False)
+    parser.add_argument("-hp", "--hide_points", help="Show individual points", \
+                        action="store_true", default=False)
+    args = parser.parse_args()
+    censored = args.censored
+    hide_points = args.hide_points
+
+    main(censored, hide_points)

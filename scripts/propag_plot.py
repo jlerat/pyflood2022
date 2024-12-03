@@ -83,7 +83,7 @@ def main():
         sites = json.load(fo)
 
     # Flood propag data
-    fp = fdata / "propag_data.csv"
+    fp = fdata / "floods" / "propag_data.csv"
     cdates = ["PEAK_DOWN_TIME", "PEAK_UP_TIME"]
     propag = pd.read_csv(fp, parse_dates=cdates, \
                     dtype={"UPID": str, "DOWNID": str}, \

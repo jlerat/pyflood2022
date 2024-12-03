@@ -72,11 +72,11 @@ def main():
     #------------------------------------------------------------
 
     # Flood event data
-    fe = fsrc / "flood_data.zip"
+    fe = fsrc / "floods" / "flood_data.zip"
     eventdata = pd.read_csv(fe, dtype={"SITEID": str}, skiprows=8)
 
     # Major australian floods
-    fm = fsrc / "major_floods.csv"
+    fm = fsrc / "floods" / "major_floods.csv"
     major_floods = pd.read_csv(fm, index_col="FLOODID", \
                             parse_dates=["START_DATE", "END_DATE"], \
                             skiprows=8)
