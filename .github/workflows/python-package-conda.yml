@@ -41,6 +41,7 @@ jobs:
           python scripts/propag_plot.py
           python scripts/scatter_plot.py
           python scripts/surprise_plot.py
+          python scripts/surprise_plot.py -c
         
       - name: Upload images
         uses: actions/upload-artifact@v3
