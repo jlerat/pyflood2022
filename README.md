@@ -1,3 +1,5 @@
+[![Build pyflood2022](https://github.com/jlerat/pyflood2022/actions/workflows/python-package-conda.yml/badge.svg?branch=master)](https://github.com/jlerat/pyflood2022/actions/workflows/python-package-conda.yml)
+
 # pyflood2022
 
 This package contains the data and code used in the paper 
