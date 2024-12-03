@@ -42,3 +42,11 @@ jobs:
           python scripts/scatter_plot.py
           python scripts/surprise_plot.py
         
+      - name: Upload images
+        uses: actions/upload-artifact@v3
+        with:
+          name: images
+          path: images/*/*.png
+ 
+        if: ${{ always() }}
+
