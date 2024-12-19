@@ -35,7 +35,6 @@ jobs:
           source $CONDA/etc/profile.d/conda.sh
           conda activate env_tiny
           cd $GITHUB_WORKSPACE
-
           echo "--- Run scripts from $PWD ---"
           python scripts/map_plot.py
           python scripts/propag_plot.py
