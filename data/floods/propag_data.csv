@@ -1,10 +1,11 @@
 # --------------------------------------------------
 # nrow : 26
 # ncol : 18
-# author : Julien Lerat, CSIRO Enviromment
 # description : Propagation data
-# reference : Lerat and Vaze (2024), Nature, submitted
-# time_generated : 2024-12-02 16:04:24
+# reference : Lerat and Vaze (2024), Communication Earth and Environment, submitted
+# time_generated : 2024-12-19 15:37:08
+# author : Julien Lerat, CSIRO Enviromment
+# source_file : DATA_prepare_propag_data.py
 # --------------------------------------------------
 FLOODID,FLOODNAME,START,END,UPID,DOWNID,PAIR,DIST,MISSING_RATIO_UP,MISSING_RATIO_DOWN,IS_VALID,PEAK_UP,PEAK_UP_TIME,PEAK_DOWN,PEAK_DOWN_TIME,PEAK_TIME_DIFF,MAJOR_FLOOD,ATTENUATION_UP_DOWN
 23Jun83,Jun83,1983-06-22 07:00:00,1983-06-25 17:00:00,203014,203402,203402_203014,15800.00000,0.00000,0.00000,True,16.06479,1983-06-23 06:00:00,7.97800,1983-06-23 21:00:00,15.00000,Jun83,8.08679

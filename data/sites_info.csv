@@ -1,10 +1,11 @@
 # --------------------------------------------------
 # nrow : 1131
 # ncol : 5
-# author : Julien Lerat, CSIRO Enviromment
 # description : Site information
-# reference : Lerat and Vaze (2024), Nature, submitted
-# time_generated : 2024-12-02 16:00:34
+# reference : Lerat and Vaze (2024), Communication Earth and Environment, submitted
+# time_generated : 2024-12-19 15:40:36
+# author : Julien Lerat, CSIRO Enviromment
+# source_file : DATA_prepare_flood_data.py
 # --------------------------------------------------
 STATIONID,LONGITUDE[deg],LATITUDE[deg],CATCHMENTAREA[km2],STATE,NAME
 002101,139.36710,-25.90837,115205.00000,QLD,Diamantina River At Birdsville
@@ -1124,6 +1125,9 @@ G8170084,131.23371,-13.09001,1246.00000,NT,Adelaide River - Tortilla Flats
 G9030176,133.20750,-14.94336,5610.00000,NT,Roper River - D/S Mataranka Homestead
 G9030514,133.36165,-14.32185,,NT,Waterhouse River - D/S Diljin Hill
 G9070132,136.08473,-16.45189,10400.00000,NT,Mcarthur River - Mim Pump
+203402,153.30254,-28.78541,,,Woodlawn College
+203403,153.28960,-28.99000,4325.00000,NSW,Richmond River At Coraki
+203412,153.34413,-29.07109,,,Woodburn
 203427,153.26689,-28.84571,,,East Gundurimba
 203432,153.32626,-29.09603,,,Rocky Mouth Creek
 203443,153.24019,-28.79576,,,Tuncester
@@ -1135,6 +1139,3 @@ G9070132,136.08473,-16.45189,10400.00000,NT,Mcarthur River - Mim Pump
 203470,153.27391,-29.00709,,NSW,Richmond Rv @ Oakland Road
 203475,153.40808,-29.12370,,,Iron Gates
 203480,153.33856,-29.08458,,,Tucombil Highway Bridge
-203402,153.30254,-28.78541,,,Woodlawn College
-203403,153.28960,-28.99000,4325.00000,NSW,Richmond River At Coraki
-203412,153.34413,-29.07109,,,Woodburn
