@@ -1,0 +1,40 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: pyflood2022
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Julien
+    family-names: Lerat
+    email: julien.lerat@csiro.au
+    affiliation: CSIRO
+    orcid: '0000-0003-4521-8874'
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.13928254
+repository-code: 'https://github.com/jlerat/pyflood2022'
+url: 'https://github.com/jlerat/pyflood2022'
+abstract: >-
+  This package includes the code and data supporting the 
+  2022 flood paper.
+keywords:
+  - Flood
+  - Hydrology
+  - Australia
+license: MIT
+
+references:
+  - type: article
+    title: When the impossible happens: how February 2022 event redefines extreme floods in Australia
+    authors:
+      - family-names: "Lerat"
+        given-names: "Julien"
+        orcid: "0000-0003-4521-8874"
+    year: 2024
+    journal: "Communication Earth & Environment"
+    volume: "in review"
+    url: "https://www.researchsquare.com/article/rs-5575327/v1"

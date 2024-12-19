@@ -1,0 +1,19 @@
+[project]
+name = "pyflood2022"
+version = "1.0"
+authors = [{name = "Julien Lerat, CSIRO Environment", email="julien.lerat@csiro.au"}]
+description = "Data and code supporting the 2022 flood paper"
+readme = "README.md"
+license = {file = "LICENSE"}
+keywords = ["hydrology"]
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python 3",
+    "Topic :: Scientific/Engineering :: Hydrology"
+]    
+requires-python = ">= 3.8"
+dependencies = [
+    "numpy >= 1.20.0",
+    "pandas >= 2.0.0",
+]
+
