@@ -44,3 +44,8 @@ The code used to generate the figures of the paper are
 * [scatter_plot.py](scripts/scatter_plot.py): Script to generate Figure 3 (scatter plots).
 * [surprise_plot.py](scripts/surprise_plot.py): Script to generate Figure 4 (statistics of the surprise index).
 
+## Attribution
+This project is licensed under the [MIT License](LICENSE), which allows for free use, modification, and distribution of the code under the terms of the license.
+
+For proper citation of this project, please refer to the [CITATION.cff](CITATION.cff) file, which provides guidance on how to cite the software and relevant publications.
+
