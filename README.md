@@ -3,7 +3,7 @@
 # pyflood2022
 
 This package contains the data and code used in the paper 
-by Lerat and Vaze (2024), Nature, submitted.
+by Lerat and Vaze (2024), Communications Earth & Environment, in review.
 
 ## Data
 The data provided in this package is in the data/floods folder and includes
