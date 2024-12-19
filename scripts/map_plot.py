@@ -27,8 +27,8 @@ from netCDF4 import Dataset, num2date
 
 from scipy.stats import percentileofscore
 from scipy.signal import convolve
-from scipy.ndimage import gaussian_filter, \
-                            maximum_filter
+from scipy.ndimage import gaussian_filter
+from scipy.ndimage import maximum_filter
 
 import matplotlib.pyplot as plt
 from matplotlib.colors import BoundaryNorm
@@ -89,12 +89,12 @@ def plot_shape(ax, fshp, *args, **kwargs):
 def plot_cities(ax, cities, text_kwargs={}):
     # Plot options
     plot_kwargs = {
-        "marker": "s", \
-        "mfc": "tab:orange", \
-        "mec" : "k", \
-        "ms": 7, \
+        "marker": "s",
+        "mfc": "tab:orange",
+        "mec" : "k",
+        "ms": 7,
         "color": "none"
-    }
+        }
     text_kwargs["color"] = text_kwargs.get("color", "black")
     pe = [patheff.withStroke(linewidth=2, foreground="w")]
     text_kwargs["path_effects"] = text_kwargs.get("path_effects", pe)
@@ -107,7 +107,6 @@ def plot_cities(ax, cities, text_kwargs={}):
 
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
-
 
 
 def main():
@@ -148,16 +147,16 @@ def main():
     aheight = awidth*0.9*(y1-y0)/(x1-x0)/len(mosaic) # Equal scale
 
     col_rivers = {
-        "Wilsons": "tab:green", \
-        "Richmond": "tab:orange", \
+        "Wilsons": "tab:green",
+        "Richmond": "tab:orange",
         "Mary": "pink"
     }
 
     cities_below_kwargs = dict(
-        path_effects=[patheff.withStroke(linewidth=4, foreground="w")], \
-        textcoords="offset pixels", \
-        ha="center", \
-        fontsize=15, \
+        path_effects=[patheff.withStroke(linewidth=4, foreground="w")],
+        textcoords="offset pixels",
+        ha="center",
+        fontsize=15,
         xytext=(0, -80)
     )
 
@@ -190,23 +189,23 @@ def main():
     # Towns
     towns = pd.read_csv(fsrc / "gis" / "main_towns.csv", skiprows=8)
     idx = (towns.xcoord>=x0)&(towns.xcoord<=x1)\
-            & (towns.ycoord>=y0)&(towns.ycoord<=y1)\
-            & (towns.POPULATION_MIN>=10000)\
-            & (towns.NAME!="Nambour")
+          & (towns.ycoord>=y0)&(towns.ycoord<=y1)\
+          & (towns.POPULATION_MIN>=10000)\
+          & (towns.NAME!="Nambour")
     towns = towns.loc[idx]
-    towns = {re.sub(" (\(|-).*", "", t.NAME): \
-                        (t.xcoord, t.ycoord) for _, t in towns.iterrows()}
+    towns = {re.sub(" (\(|-).*", "", t.NAME): (t.xcoord, t.ycoord)
+             for _, t in towns.iterrows()}
 
-    towns_top = {tn:to for tn, to in towns.items() \
-                    if re.search("Ball", tn)}
-    towns_below = {tn:to for tn, to in towns.items() \
-                    if not re.search("Bong|Yarr|Byr|Ball|Gold|Sun", tn)}
+    towns_top = {tn:to for tn, to in towns.items()
+                 if re.search("Ball", tn)}
+    towns_below = {tn:to for tn, to in towns.items()
+                   if not re.search("Bong|Yarr|Byr|Ball|Gold|Sun", tn)}
 
     # Streamflow
     fs = fsrc / "streamflow_data_sites_info.csv"
-    sites = pd.read_csv(fs, index_col="STATIONID", \
-                                dtype={"STATIONID":str},
-                                skiprows=8)
+    sites = pd.read_csv(fs, index_col="STATIONID",
+                        dtype={"STATIONID":str},
+                        skiprows=9)
     flows = {}
     for aname in [n for l in mosaic for n in l]:
         if aname.startswith("grid"):
@@ -214,7 +213,7 @@ def main():
         siteid = re.sub(".*_", "", aname)
         f = fsrc / "floods" / f"streamflow_data_{siteid}.csv"
         df = pd.read_csv(f, index_col=0, parse_dates=True, \
-                            skiprows=8)
+                            skiprows=9)
         se = df.loc[:, "STREAMFLOW[m3/sec]"]
         flows[siteid] = se
 
@@ -224,8 +223,8 @@ def main():
         argrid = nc["awral_data"][:].filled()
         arvarnames = nc["variable"][:].tolist()
         artimes = nc["time"]
-        artimes = pd.DatetimeIndex(num2date(artimes[:], artimes.units, \
-                            only_use_cftime_datetimes=False))
+        artimes = pd.DatetimeIndex(num2date(artimes[:], artimes.units,
+                                   only_use_cftime_datetimes=False))
         arllons = nc["longitude"][:].filled()
         arllats = nc["latitude"][:].filled()
 
@@ -253,8 +252,8 @@ def main():
 
         plt.close("all")
         ncols, nrows = len(mosaic[0]), len(mosaic)
-        fig = plt.figure(figsize=(ncols*awidth, nrows*aheight),\
-                            layout="constrained")
+        fig = plt.figure(figsize=(ncols*awidth, nrows*aheight),
+                         layout="constrained")
         kw = None #dict(height_ratios=[1, 3, 1, 3])
         axs = fig.subplot_mosaic(mosaic, gridspec_kw=kw)
         anames = ["grid_sm", "grid_rain"]
@@ -278,27 +277,26 @@ def main():
 
                 sname = get_shortname(sinfo.NAME)
                 title = f"({letters[iax]}) {sname} ({area:0.0f} km$^2$)"
-                ax.set(xlabel="", ylabel=r"streamflow [m$^3$ s$^{-1}$]", \
-                                    title=title)
+                ax.set(xlabel="", ylabel=r"streamflow [m$^3$ s$^{-1}$]",
+                       title=title)
                 ax.yaxis.set_major_locator(ticker.MaxNLocator(4))
 
                 axmap = axs["grid_rain"]
                 x = sinfo["LONGITUDE[deg]"]
                 y = sinfo["LATITUDE[deg]"]
-                axmap.plot(x, y, "o", ms=12, \
-                        markeredgecolor="w", \
-                        markerfacecolor="tab:red", \
-                        markeredgewidth=2, \
-                        zorder=1000)
+                axmap.plot(x, y, "o", ms=12,
+                           markeredgecolor="w",
+                           markerfacecolor="tab:red",
+                           markeredgewidth=2,
+                           zorder=1000)
 
                 lab = "\n".join(re.split(" ", sname))
-                axmap.annotate(lab, (x, y), \
-                    va="bottom", ha="center", \
-                    textcoords="offset pixels", \
-                    xytext=(0, 30), \
-                    fontsize=15, \
-                    path_effects=[patheff.withStroke(linewidth=4, foreground="w")])
-
+                axmap.annotate(lab, (x, y),
+                               va="bottom", ha="center",
+                               textcoords="offset pixels",
+                               xytext=(0, 30),
+                               fontsize=15,
+                               path_effects=[patheff.withStroke(linewidth=4, foreground="w")])
                 continue
 
             # Plot config
@@ -359,12 +357,10 @@ def main():
                     ax.plot([], [], "-", lw=6, color=backc, label=label)
 
                     if rn != "Wilsons":
-                        plot_shape(ax, fshp_catch, name_filter=rn.upper(), \
-                                        color=backc, linestyle="-", lw=2)
+                        plot_shape(ax, fshp_catch, name_filter=rn.upper(),
+                                   color=backc, linestyle="-", lw=2)
                         label = f"{rn} Catchment"
                         ax.plot([], [], "-", lw=2, color=backc, label=label)
-
-
 
             # .. towns
             if aname == "grid_sm":
@@ -372,20 +368,20 @@ def main():
                 plot_cities(ax, cities=towns_below, text_kwargs=cities_below_kwargs)
 
             # .. surface data
-            cnt = ax.contourf(llons, llats, toplot, \
-                        cmap=cmap, norm=norm, \
-                        vmin=0., vmax=vmax, \
-                        levels=levels)
+            cnt = ax.contourf(llons, llats, toplot,
+                              cmap=cmap, norm=norm,
+                              vmin=0., vmax=vmax,
+                              levels=levels)
 
             for c in cnt.collections:
                 c.set_edgecolor("face")
 
-            colb = fig.colorbar(cnt, ax=ax, ticks=bounds, \
-                        shrink=0.5, aspect=30, anchor=(0., 0.5))
+            colb = fig.colorbar(cnt, ax=ax, ticks=bounds,
+                                shrink=0.5, aspect=30, anchor=(0., 0.5))
             colb.ax.set_ylim([bounds[0], bounds[-1]])
 
             title = f"Rainfall\n[mm]\n" if aname=="grid_rain"\
-                        else "Root\nZone\nSoil\nMoist.\n[%sat]\n"
+                    else "Root\nZone\nSoil\nMoist.\n[%sat]\n"
             colb.ax.set_title(title, fontsize=12)
 
             ax.set_xlim((x0, x1))
@@ -393,21 +389,21 @@ def main():
 
             # Decorate
             def get_ticks(a0, a1, delta=0.5, eps=1e-2):
-                b0 = int(a0/delta)*delta
-                b1 = (int(a1/delta)+1)*delta
-                k = (b1-b0)/delta
-                tk = b0+delta*np.arange(k)
-                return tk[(tk>a0+eps)&(tk<b1-eps)]
+                b0 = int(a0 / delta) * delta
+                b1 = (int(a1 / delta) + 1) * delta
+                k = (b1 - b0) / delta
+                tk = b0 + delta * np.arange(k)
+                return tk[(tk > a0 + eps) & (tk < b1 - eps)]
 
             ax.set_xticks(get_ticks(x0, x1))
-            ax.set_yticks(get_ticks(y0, y1-1e-3))
+            ax.set_yticks(get_ticks(y0, y1 - 1e-3))
 
             if aname == "grid_rain":
                 title = f"({letters[iax]}) Maximum {dur}h total rainfall\n"
             else:
                 txt = time_awra.strftime("%d %b")
                 title = f"({letters[iax]}) Saturation of soil column"\
-                            +f" (1m depth)\non {txt}"
+                        + f" (1m depth)\non {txt}"
 
             ax.set_title(title, fontsize=15)
             ax.xaxis.set_major_locator(ticker.MaxNLocator(3))
@@ -422,8 +418,8 @@ def main():
 
                 # Map of Australia
                 axi = ax.inset_axes([0.55, 0, 0.45, 0.12])
-                axi.plot([x0, x1, x1, x0, x0], \
-                            [y0, y0, y1, y1, y0], "-", lw=6, color="tab:red")
+                axi.plot([x0, x1, x1, x0, x0],
+                         [y0, y0, y1, y1, y0], "-", lw=6, color="tab:red")
                 plot_shape(axi, fshp_coast, color="k", lw=1)
                 axi.set(xticks=[], yticks=[])
                 axi.axis("equal")

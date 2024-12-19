@@ -80,12 +80,12 @@ def format_spines(ax):
 
 def set_logscale(ax):
     y0, y1 = ax.get_ylim()
-    y0 = int(min(y0, y1))-1
-    y1 = int(max(y0, y1))+2
-    yticks = np.arange(y0, y1+1)
+    y0 = int(min(y0, y1)) - 1
+    y1 = int(max(y0, y1)) + 2
+    yticks = np.arange(y0, y1 + 1)
     ax.set_yticks(yticks)
-    yticklabs = [f"{10.**t:0.0f}" if t>=0 else f"{10.**t:0.1f}" \
-                        for t in yticks]
+    yticklabs = [f"{10.**t:0.0f}" if t >= 0 else f"{10.**t:0.1f}"
+                 for t in yticks]
     ax.set_yticklabels(yticklabs)
 
 
@@ -96,11 +96,10 @@ def main(censored, hide_points):
     print(f"Censored = {censored}")
     print(f"Hide points = {hide_points}\n")
 
-    varnames = [
-        "SPECIFICFLOW_PEAK", \
-        "RUNOFF_120H", \
-        "RUNOFF_240H"
-    ]
+    varnames = ["SPECIFICFLOW_PEAK",
+                "RUNOFF_120H",
+                "RUNOFF_240H"
+                ]
 
     cn_surprise = "Q100-SURPRISE"
 
@@ -116,8 +115,8 @@ def main(censored, hide_points):
     color_others = "tab:purple"
     fname_22 = "Feb22"
 
-    title_args = dict(y=0.98, x=0.01, pad=-15, loc="left", \
-                        fontweight="normal", fontsize=20)
+    title_args = dict(y=0.98, x=0.01, pad=-15, loc="left",
+                      fontweight="normal", fontsize=20)
 
     #------------------------------------------------------------
     # Folders
@@ -137,18 +136,18 @@ def main(censored, hide_points):
 
     # Site info
     fs = fsrc / "sites_info.csv"
-    sites = pd.read_csv(fs, index_col="STATIONID", skiprows=8)
+    sites = pd.read_csv(fs, index_col="STATIONID", skiprows=9)
 
     # Flood event data
     fe = fsrc / "floods" / "flood_data_censored.zip" if censored \
-            else fsrc / "floods" / "flood_data.zip"
-    eventdata = pd.read_csv(fe, dtype={"siteid": str}, skiprows=8)
+        else fsrc / "floods" / "flood_data.zip"
+    eventdata = pd.read_csv(fe, dtype={"siteid": str}, skiprows=9)
 
     # Major australian floods
     fm = fsrc / "floods" / "major_floods.csv"
-    major_floods = pd.read_csv(fm, index_col="FLOODID", \
-                            parse_dates=["START_DATE", "END_DATE"], \
-                            skiprows=8)
+    major_floods = pd.read_csv(fm, index_col="FLOODID",
+                               parse_dates=["START_DATE", "END_DATE"],
+                               skiprows=9)
     idx = major_floods.MORE_THAN_5_SITES_AVAILABLE==1
     major_floods = major_floods.loc[idx]
 
@@ -191,8 +190,8 @@ def main(censored, hide_points):
 
         plt.close("all")
         nrows, ncols = len(mosaic), len(mosaic[0])
-        fig = plt.figure(figsize=(axwidth*ncols, axheight*nrows), \
-                                                    layout="constrained")
+        fig = plt.figure(figsize=(axwidth*ncols, axheight*nrows),
+                         layout="constrained")
 
         wr = [2, 1] if ncols==2 else [1]
         kw = dict(width_ratios=wr, hspace=0.1)
@@ -205,9 +204,9 @@ def main(censored, hide_points):
             vn = re.sub("SPECIFIC", "", varname)
             vn = re.sub("RUNOFF", "VOL", vn)
             col_value = next(cn for cn in edata.columns \
-                                        if re.search(vn, cn))
-            mfdata = pd.pivot_table(edata, index="SITEID", \
-                                    columns="MAJOR_FLOOD", \
+                if re.search(vn, cn))
+            mfdata = pd.pivot_table(edata, index="SITEID",
+                                    columns="MAJOR_FLOOD",
                                     values=col_value)
 
             # .. re-order floods
@@ -272,7 +271,7 @@ def main(censored, hide_points):
                             path_effects=[pe.withStroke(linewidth=7, \
                                                 foreground="w")])
 
-            y0, y1 = (-0.1, 0.4) if marginal=="GEV" else (-0.2, 0.5)
+            y0, y1 = (-0.1, 0.4) #if marginal=="GEV" else (-0.2, 0.5)
             ax.set_ylim((y0, y1))
 
             # decorate
@@ -329,14 +328,15 @@ def main(censored, hide_points):
 
         for fname in mfdata.columns[::3]:
             xf = cols.index(fname)
-            con = ConnectionPatch(\
-                        xyA=(xf, y1), coordsA=ax1.transData, \
-                        xyB=(xf, y2), coordsB=ax2.transData, \
-                        color="0.6", linestyle=":")
+            con = ConnectionPatch(xyA=(xf, y1),
+                                  coordsA=ax1.transData,
+                                  xyB=(xf, y2),
+                                  coordsB=ax2.transData,
+                                  color="0.6", linestyle=":")
             fig.add_artist(con)
 
-        fp = fimg / (f"surprise"+\
-                f"_{marginal}_C{int(censored)}_H{int(hide_points)}.png")
+        fp = fimg / (f"surprise"
+                     + f"_{marginal}_C{int(censored)}_H{int(hide_points)}.png")
         fig.savefig(fp, dpi=fdpi)
 
 
@@ -345,9 +345,9 @@ if __name__ == "__main__":
         description="Surprise index figure", \
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument("-c", "--censored", help="Use censored data", \
+    parser.add_argument("-c", "--censored", help="Use censored data",
                         action="store_true", default=False)
-    parser.add_argument("-hp", "--hide_points", help="Show individual points", \
+    parser.add_argument("-hp", "--hide_points", help="Show individual points",
                         action="store_true", default=False)
     args = parser.parse_args()
     censored = args.censored

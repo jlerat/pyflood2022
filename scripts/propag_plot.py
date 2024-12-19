@@ -44,21 +44,20 @@ def main():
     cz = "PEAK_DOWN"
 
     labels = {
-        "ATTENUATION_UP_DOWN": "Peak attenuation\n{uname}/{dname} [m]", \
-        "PEAK_TIME_DIFF": "Peak time difference\n{dname}/{uname} [hr]", \
-        "PEAK_DOWN": "Peak water level\n{dname} [m]", \
+        "ATTENUATION_UP_DOWN": "Peak attenuation\n{uname}/{dname} [m]",
+        "PEAK_TIME_DIFF": "Peak time difference\n{dname}/{uname} [hr]",
+        "PEAK_DOWN": "Peak water level\n{dname} [m]",
         "RISING_SPEED_DOWN": "Water level rising speed [m/hr]"
-    }
-
-    annotation_kw = {
-            "path_effects": [patheff.withStroke(linewidth=1, alpha=0.8, foreground="w")], \
-            "textcoords": "offset pixels",
-            "ha": "center", \
-            "va": "bottom", \
-            "color": "0.2", \
-            "xytext": (0, 10)
         }
 
+    annotation_kw = {
+       "path_effects": [patheff.withStroke(linewidth=1, alpha=0.8, foreground="w")],
+       "textcoords": "offset pixels",
+       "ha": "center",
+       "va": "bottom",
+       "color": "0.2",
+       "xytext": (0, 10)
+       }
 
     #----------------------------------------------------------------------
     # @Folders
@@ -76,7 +75,7 @@ def main():
     # @Get data
     #----------------------------------------------------------------------
     fs = fdata / "sites_info.csv"
-    sites_info = pd.read_csv(fs, index_col="STATIONID", skiprows=8)
+    sites_info = pd.read_csv(fs, index_col="STATIONID", skiprows=9)
 
     fs = fdata / "propag_data_sites_info.json"
     with fs.open("r") as fo:
@@ -85,9 +84,9 @@ def main():
     # Flood propag data
     fp = fdata / "floods" / "propag_data.csv"
     cdates = ["PEAK_DOWN_TIME", "PEAK_UP_TIME"]
-    propag = pd.read_csv(fp, parse_dates=cdates, \
-                    dtype={"UPID": str, "DOWNID": str}, \
-                    skiprows=8)
+    propag = pd.read_csv(fp, parse_dates=cdates,
+                         dtype={"UPID": str, "DOWNID": str},
+                         skiprows=9)
     pairs = propag.PAIR.unique()
 
     #----------------------------------------------------------------------
@@ -118,8 +117,8 @@ def main():
         t = pro.PEAK_TIME_DIFF
         w = pro.PEAK_DOWN
         imax = w.idxmax()
-        is22max = (imax>pd.to_datetime("2022-02-25")) \
-                & (imax<pd.to_datetime("2022-03-10"))
+        is22max = (imax>pd.to_datetime("2022-02-25"))\
+                  & (imax<pd.to_datetime("2022-03-10"))
 
         # Minimum water level to display flood name
         cuts = sites["flood_thresholds"].get(downid)
@@ -130,31 +129,31 @@ def main():
 
         # Create plot
         plt.close("all")
-        fig = plt.figure(figsize=(awidth, aheight), \
-                                layout="tight")
+        fig = plt.figure(figsize=(awidth, aheight),
+                         layout="tight")
         ax = fig.add_subplot(1, 1, 1, projection="3d")
 
         zmin = int(z.min())-1
-        for xx, yy, zz, ww, tt, nn in zip(x, y, z, w, t, \
-                            pro.MAJOR_FLOOD.astype(str)):
+        for xx, yy, zz, ww, tt, nn in zip(x, y, z, w, t,
+                                          pro.MAJOR_FLOOD.astype(str)):
             # Plot stem
             col = "tab:red" if nn=="Feb22" else "0.4"
-            ax.plot([xx]*2, [yy]*2, [zmin, zz], "-", \
-                            color=col, lw=1.2)
+            ax.plot([xx]*2, [yy]*2, [zmin, zz], "-",
+                    color=col, lw=1.2)
 
-            ax.plot([xx], [yy], [zz], \
-                linestyle="none", \
-                marker="o", \
-                markerfacecolor="w", \
-                markersize=5, \
-                markeredgecolor=col)
+            ax.plot([xx], [yy], [zz],
+                    linestyle="none",
+                    marker="o",
+                    markerfacecolor="w",
+                    markersize=5,
+                    markeredgecolor=col)
 
-            ax.plot([xx], [yy], [zmin], \
-                linestyle="none", \
-                marker="o", \
-                markerfacecolor=col, \
-                markersize=2, \
-                markeredgecolor=col)
+            ax.plot([xx], [yy], [zmin],
+                    linestyle="none",
+                    marker="o",
+                    markerfacecolor=col,
+                    markersize=2,
+                    markeredgecolor=col)
 
             # Plot flood name
             if nn=="nan":
@@ -177,24 +176,24 @@ def main():
                     rotation = 90
                     zztxt = zz
 
-                ax.text(xx, yy, zztxt, txt, \
-                            va="bottom", \
-                            ha="center", \
-                            color=coltxt, \
-                            rotation=rotation, \
-                            fontweight="bold", \
-                            fontsize=fz)
+                ax.text(xx, yy, zztxt, txt,
+                        va="bottom",
+                        ha="center",
+                        color=coltxt,
+                        rotation=rotation,
+                        fontweight="bold",
+                        fontsize=fz)
 
         _, z1 = ax.get_zlim()
         ax.set(zlim=(zmin, z1))
 
         fz = 10
-        ax.set_xlabel("\n"+labels[cx].format(uname=uname, dname=dname), \
-                                    fontsize=fz)
-        ax.set_ylabel("\n"+labels[cy].format(uname=uname, dname=dname), \
-                                        fontsize=fz)
-        ax.set_zlabel(labels[cz].format(uname=uname, dname=dname), \
-                                        fontsize=fz)
+        ax.set_xlabel("\n"+labels[cx].format(uname=uname, dname=dname),
+                      fontsize=fz)
+        ax.set_ylabel("\n"+labels[cy].format(uname=uname, dname=dname),
+                      fontsize=fz)
+        ax.set_zlabel(labels[cz].format(uname=uname, dname=dname),
+                      fontsize=fz)
 
         ax.xaxis.set_major_locator(ticker.MaxNLocator(5))
         ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
@@ -202,8 +201,8 @@ def main():
         ax.view_init(elev=20., azim=-60, roll=0)
 
         if pair == "203402_203014":
-            axi = ax.inset_axes((0.52, 0.66, 0.48, 0.38), \
-                            transform=fig.transFigure)
+            axi = ax.inset_axes((0.52, 0.66, 0.48, 0.38),
+                                transform=fig.transFigure)
             fp = fdata / "Eltham2Woodlawn_map_v2.png"
             axi.imshow(mpimg.imread(fp))
             axi.axis("off")
@@ -211,7 +210,5 @@ def main():
         fp = fimg / f"propag_{pair}.{imgext}"
         fig.savefig(fp, dpi=fdpi)
 
-
 if __name__ == "__main__":
     main()
-

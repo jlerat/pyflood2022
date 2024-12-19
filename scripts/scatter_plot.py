@@ -36,11 +36,10 @@ def main():
     #----------------------------------------------------------------------
     # Config
     #----------------------------------------------------------------------
-    varnames = [
-        "SPECIFICFLOW_PEAK", \
-        "RUNOFF_120H", \
-        "RUNOFF_240H"
-    ]
+    varnames = ["SPECIFICFLOW_PEAK",
+                "RUNOFF_120H",
+                "RUNOFF_240H"
+                ]
 
     # used for XY config
     varref = "SPECIFICFLOW_PEAK"
@@ -73,13 +72,13 @@ def main():
 
     # Flood event data
     fe = fsrc / "floods" / "flood_data.zip"
-    eventdata = pd.read_csv(fe, dtype={"SITEID": str}, skiprows=8)
+    eventdata = pd.read_csv(fe, dtype={"SITEID": str}, skiprows=9)
 
     # Major australian floods
     fm = fsrc / "floods" / "major_floods.csv"
-    major_floods = pd.read_csv(fm, index_col="FLOODID", \
-                            parse_dates=["START_DATE", "END_DATE"], \
-                            skiprows=8)
+    major_floods = pd.read_csv(fm, index_col="FLOODID",
+                               parse_dates=["START_DATE", "END_DATE"],
+                               skiprows=9)
     major_floods = major_floods.sort_values("START_DATE")
 
     # .. set major floods plot specs
@@ -106,12 +105,12 @@ def main():
 
     # Fig dimensions
     nvars = len(varnames)
-    offset = 0 if nvars%ncols==0 else 1
-    nrows = nvars//ncols+offset
+    offset = 0 if nvars%ncols == 0 else 1
+    nrows = nvars // ncols + offset
 
     vv = varnames
-    mosaic = [l.tolist()+["."]*(ncols-len(l))\
-                    for l in np.array_split(vv, nrows)]
+    mosaic = [l.tolist() + ["."] * (ncols-len(l))
+              for l in np.array_split(vv, nrows)]
 
     flat = [n for m in mosaic for n in m if n!="."]
     extremes = []
@@ -119,8 +118,8 @@ def main():
     # plot
     plt.close("all")
     nrows, ncols = len(mosaic), len(mosaic[0])
-    fig = plt.figure(figsize=(axwidth*ncols, axheight*nrows), \
-                                                layout="tight")
+    fig = plt.figure(figsize=(axwidth*ncols, axheight*nrows),
+                     layout="tight")
     axs = fig.subplot_mosaic(mosaic)
 
     for iax, (varname, ax) in enumerate(axs.items()):
@@ -154,7 +153,7 @@ def main():
                 xmax.append((b0+b1)/2)
                 ymax.append(y[kk].max())
 
-        ax.plot(xmax, ymax, ":", color="grey", lw=2, \
+        ax.plot(xmax, ymax, ":", color="grey", lw=2,
                 label="Max AUS")
 
         # Plot historical floods
@@ -171,13 +170,13 @@ def main():
 
             # Plot NR 2022
             lab = re.sub(".*-", "", mfid)
-            ax.plot(xf, yf, mfinfo.marker, color=mfinfo.color, \
-                                mec="0.3", label=lab)
+            ax.plot(xf, yf, mfinfo.marker, color=mfinfo.color,
+                    mec="0.3", label=lab)
 
         # decorate
         ax.set(xscale="log", xlim=(6, 1e5))
-        xlabel = "Dist Coast [km]" if varexplain == "coastdist" \
-                    else "Catchment Area [km$^2$]"
+        xlabel = "Dist Coast [km]" if varexplain == "coastdist"\
+            else "Catchment Area [km$^2$]"
 
         unit = r"m$^3$ s$^{-1}$ km$^{-2}$" if varname.startswith("SPECIFIC") else "mm"
 
@@ -224,8 +223,8 @@ def main():
 
         # Reference envelop curves
         x0, x1 = ax.get_xlim()
-        if re.search("specificflow_peak", vartxt) \
-                            and varexplain=="CATCHMENTAREA":
+        if re.search("specificflow_peak", vartxt)\
+                and varexplain=="CATCHMENTAREA":
             xx = np.logspace(math.log10(x0), math.log10(x1), 500)
 
             # See Table 1 in
