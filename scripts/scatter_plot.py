@@ -31,26 +31,37 @@ mpl.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.transforms as mtransforms
 
+from hydrodiy.plot import putils
 
 def main():
     #----------------------------------------------------------------------
     # Config
     #----------------------------------------------------------------------
-    varnames = ["SPECIFICFLOW_PEAK",
-                "RUNOFF_120H",
-                "RUNOFF_240H"
-                ]
+    title1 = "Specific Instantaneous Flow vs Catchment Area"
+    title2 = "Specific Instantaneous Flow vs 5 days runoff total"
+    plots = {
+        title1: dict(varx="CATCHMENTAREA",
+                  vary="SPECIFICFLOW_PEAK"),
+        title2: dict(varx="RUNOFF_240H",
+                  vary="SPECIFICFLOW_PEAK"),
+    }
 
-    # used for XY config
-    varref = "SPECIFICFLOW_PEAK"
+    var_axislabels = {
+        "SPECIFICFLOW_PEAK": "Specific flow [m$^3$ s$^{-1}$ km$^{-2}$]",
+        "CATCHMENTAREA": "Catchment Area [km$^2$]",
+        "RUNOFF_120H": "Maximum Runoff Total - 5 days [mm]",
+        "RUNOFF_240H": "Maximum Runoff Total - 10 days [mm]"
+        }
 
-    varexplain = "CATCHMENTAREA"
+    var_titles = {
+        "SPECIFICFLOW_PEAK": "Specific instantaneous peak flow",
+        "RUNOFF_120H": "Maximum Runoff Total - 5 days",
+        "RUNOFF_240H": "Maximum Runoff Total - 10 days"
+        }
 
     imgext = "png"
-    axwidth, axheight = 5, 5
+    axwidth, axheight = 6, 6
     fdpi = 300
-
-    ncols = min(3, len(varnames))
 
     #----------------------------------------------------------------------
     # Folders
@@ -103,58 +114,35 @@ def main():
     # Plot
     #------------------------------------------------------------
 
-    # Fig dimensions
-    nvars = len(varnames)
-    offset = 0 if nvars%ncols == 0 else 1
-    nrows = nvars // ncols + offset
-
-    vv = varnames
-    mosaic = [l.tolist() + ["."] * (ncols-len(l))
-              for l in np.array_split(vv, nrows)]
-
-    flat = [n for m in mosaic for n in m if n!="."]
-    extremes = []
-
-    # plot
     plt.close("all")
+    mosaic = [[p for p in plots]]
     nrows, ncols = len(mosaic), len(mosaic[0])
     fig = plt.figure(figsize=(axwidth*ncols, axheight*nrows),
                      layout="tight")
     axs = fig.subplot_mosaic(mosaic)
 
-    for iax, (varname, ax) in enumerate(axs.items()):
-        vartxt = varname.lower()
+    for iax, (title, ax) in enumerate(axs.items()):
+        varx = plots[title]["varx"]
+        vary = plots[title]["vary"]
 
-        print(f"Plot {varname}")
-        pat = f"SITEID|MAJOR_FLOOD|STATE|{varname}\\[|{varexplain}\\["
+        print(f"Plot {iax + 1} : {varx}/{vary}")
+        pat = f"SITEID|MAJOR_FLOOD|STATE|{vary}\\[|{varx}\\["
         df = eventdata.filter(regex=pat, axis=1)
 
         # .. explanatory variable
-        cn = next(c for c in df.columns if re.search(varexplain, c))
+        cn = next(c for c in df.columns if re.search(varx, c))
         x = df.loc[:, cn]
 
         # .. target variable
-        cn = next(c for c in df.columns if re.search(varname, c))
+        cn = next(c for c in df.columns if re.search(vary, c))
         y = df.loc[:, cn]
         nvalid = y.notnull().sum()
 
         # plot
         alpha = 0.1
         ax.plot(x, y, "o", alpha=alpha, mec="none", mfc="0.6", ms=3)
-
-        # Max envelop
-        xmax, ymax = [], []
-        nbnds = 15
-        bnds = np.logspace(math.log10(1e-4+x.min()), math.log10(x.max()), nbnds)
-        for ibnd in range(1, len(bnds)-1):
-            b0, b1 = bnds[ibnd:ibnd+2]
-            kk = (x>=b0) & (x<b1)
-            if kk.sum()>0:
-                xmax.append((b0+b1)/2)
-                ymax.append(y[kk].max())
-
-        ax.plot(xmax, ymax, ":", color="grey", lw=2,
-                label="Max AUS")
+        ax.plot([], [], "o", mec="k", mfc="0.8", ms=5,
+                label="Site event")
 
         # Plot historical floods
         # Define 2022 event
@@ -169,62 +157,67 @@ def main():
                 continue
 
             # Plot NR 2022
-            lab = re.sub(".*-", "", mfid)
+            lab = f"{re.sub('.*-', '', mfid)} regional event"
             ax.plot(xf, yf, mfinfo.marker, color=mfinfo.color,
                     mec="0.3", label=lab)
 
-        # decorate
-        ax.set(xscale="log", xlim=(6, 1e5))
-        xlabel = "Dist Coast [km]" if varexplain == "coastdist"\
-            else "Catchment Area [km$^2$]"
+        # Axis scales
+        if varx == "CATCHMENTAREA":
+            ax.set(xscale="log", xlim=(6, 1e5))
+        elif varx.startswith("RUNOFF"):
+            _, x1 = ax.get_xlim()
+            ax.set(xscale="log", xlim=(10, x1))
 
-        unit = r"m$^3$ s$^{-1}$ km$^{-2}$" if varname.startswith("SPECIFIC") else "mm"
+        if vary.startswith("SPECIFIC"):
+            ax.set(yscale="log", ylim=(5e-2, 8e1))
+        elif vary.startswith("RUNOFF"):
+            _, y1 = ax.get_ylim()
+            ax.set(yscale="log", ylim=(10, y1))
 
-        vartxt = varname.lower()
-        if re.search("specific", vartxt):
-            vtitle = "Specific flow"
-        elif re.search("^(rain|runoff)", vartxt):
-            vtitle = re.sub("_.*", "", vartxt).title()
+        if title == title1:
+            # Max envelop
+            xmax, ymax = [], []
+            nbnds = 20
+            bnds = np.logspace(math.log10(1e-4+x.min()), math.log10(x.max()), nbnds)
+            for ibnd in range(1, len(bnds)-1):
+                b0, b1 = bnds[ibnd:ibnd+2]
+                kk = (x>=b0) & (x<b1)
+                if kk.sum()>0:
+                    xmax.append((b0+b1)/2)
+                    ymax.append(y[kk].max())
 
-        ylabel = f"{vtitle} [{unit}]"
+            ax.plot(xmax, ymax, ":", color="grey", lw=1.5,
+                    label="Max AUS")
 
-        logpat = "runoff_|specific"
-        if re.search(logpat, varname.lower()):
-            ax.set(yscale="log")
+            # Quantile regression
+            qtle = 0.99
+            xx = np.log(x) if ax.get_xscale()=="log" else x
+            yy = np.log(y) if ax.get_yscale()=="log" else y
+            data = pd.concat([xx, yy], axis=1)
+            data.columns = [re.sub("\[.*|-./*", "", cn) for cn in data.columns]
+            iok = (np.isfinite(data)&data.notnull()).all(axis=1)
+            data = data.loc[iok]
+            mod = smf.quantreg(f"{data.columns[1]}~{data.columns[0]}", data)
+            res = mod.fit(q=qtle)
+            a, b = res.params.Intercept, res.params[data.columns[0]]
 
-        ax.set(xlabel=xlabel, ylabel=ylabel)
+            x0, x1 = ax.get_xlim()
+            if ax.get_xscale()=="log":
+                uu = np.logspace(math.log10(1-3+x0), math.log10(x1), 500)
+                vv = a+b*np.log(uu)
+                eq = f"${a:0.1f}\\times A^{{{b:0.2f}}}$"
+            else:
+                uu = np.linspace(x0, x1, 500)
+                vv = a+b*uu
+                eq = f"${a:0.1f}+{b:0.2f}\\times X$"
 
-        # Quantile regression
-        qtle = 0.99
-        xx = np.log(x) if ax.get_xscale()=="log" else x
-        yy = np.log(y) if ax.get_yscale()=="log" else y
-        data = pd.concat([xx, yy], axis=1)
-        data.columns = [re.sub("\[.*|-./*", "", cn) for cn in data.columns]
-        iok = (np.isfinite(data)&data.notnull()).all(axis=1)
-        data = data.loc[iok]
-        mod = smf.quantreg(f"{data.columns[1]}~{data.columns[0]}", data)
-        res = mod.fit(q=qtle)
-        a, b = res.params.Intercept, res.params[data.columns[0]]
+            vv = np.exp(vv) if ax.get_yscale()=="log" else vv
 
-        x0, x1 = ax.get_xlim()
-        if ax.get_xscale()=="log":
-            uu = np.logspace(math.log10(1-3+x0), math.log10(x1), 500)
-            vv = a+b*np.log(uu)
-            eq = f"${a:0.1f}\\times A^{{{b:0.2f}}}$"
-        else:
-            uu = np.linspace(x0, x1, 500)
-            vv = a+b*uu
-            eq = f"${a:0.1f}+{b:0.2f}\\times X$"
+            ax.plot(uu, vv, "k-", label=f"99% AUS ({eq})", lw=3)
+            ax.set_xlim((x0, x1))
 
-        vv = np.exp(vv) if ax.get_yscale()=="log" else vv
-
-        ax.plot(uu, vv, "k-", label=f"99% AUS ({eq})", lw=3)
-        ax.set_xlim((x0, x1))
-
-        # Reference envelop curves
-        x0, x1 = ax.get_xlim()
-        if re.search("specificflow_peak", vartxt)\
-                and varexplain=="CATCHMENTAREA":
+            # Reference curves
+            x0, x1 = ax.get_xlim()
             xx = np.logspace(math.log10(x0), math.log10(x1), 500)
 
             # See Table 1 in
@@ -238,24 +231,13 @@ def main():
             ax.plot(xx, yy, "--", color="tab:purple", label=f"99% US ({eq})", lw=3)
             ax.set_xlim((x0, x1))
 
-        if re.search("rain|runoff", vartxt):
-            d = int(re.search("[0-9]+", vartxt).group())//24
-            n = re.sub("_", " ", re.sub("_.*", "", vartxt))
-            txt = f"Maximum {n} total - {d} days"
-        else:
-            txt = "Specific peak flow"
-
-        title = f"({letters[iax]}) {txt}"
-        ax.set(title=title)
-
-        ax.legend(loc=4, fontsize="large", framealpha=0.8)
-
-        if re.search("specificflow_peak", vartxt):
-            ax.set_ylim((5e-3, 1e2))
-
-        elif re.search("runoff_", vartxt):
-            _, y1 = ax.get_ylim()
-            ax.set_ylim((10, y1))
+        # decorate
+        xlabel = var_axislabels[varx]
+        ylabel = var_axislabels[vary]
+        title_full = f"({letters[iax]}) {title}"
+        ax.set(xlabel=xlabel, ylabel=ylabel, title=title_full)
+        legloc = 1 if title == title1 else 2
+        ax.legend(loc=legloc, fontsize="large", framealpha=0.8)
 
     fp = fimg / f"FIGB_scatterplots.{imgext}"
     fig.savefig(fp, dpi=fdpi)
