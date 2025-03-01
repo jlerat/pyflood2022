@@ -89,24 +89,22 @@ def set_logscale(ax):
     ax.set_yticklabels(yticklabs)
 
 
-def main(censored, hide_points):
+def main(censored, marginal, hide_points, clear=False):
     #----------------------------------------------------------------------
     # Config
     #----------------------------------------------------------------------
     print(f"Censored = {censored}")
+    print(f"Marginal = {marginal}")
     print(f"Hide points = {hide_points}\n")
 
     varnames = ["SPECIFICFLOW_PEAK",
-                "RUNOFF_120H",
                 "RUNOFF_240H"
                 ]
 
     cn_surprise = "Q100-SURPRISE"
 
-    marginals = ["GEV", "LOGPEARSON3"]
-
     axwidth = 18
-    axheight = 4.5
+    axheight = 7
     fdpi = 300
     xlabel_fontsize = 14
     ylabel_fontsize = 14
@@ -129,6 +127,10 @@ def main(censored, hide_points):
 
     fimg = froot / "images" / "surprise"
     fimg.mkdir(exist_ok=True, parents=True)
+
+    if clear:
+        for f in fimg.glob("*.*"):
+            f.unlink()
 
     #------------------------------------------------------------
     # Get data
@@ -154,190 +156,185 @@ def main(censored, hide_points):
     #------------------------------------------------------------
     # Plot
     #------------------------------------------------------------
-    for marginal in marginals:
-        print(f"Plot {marginal}")
+    # Select data
+    pat = "SITEID|STATE|MAJOR_FLOOD|WATERYEAR"
+    vns = [re.sub("SPECIFIC", "", re.sub("RUNOFF", "VOL", vn)) for vn in varnames]
+    pcens = 0.2 if censored else 0.
+    pat += "|"+"|".join([f"{vn}_C{pcens*10:02.0f}_{marginal}-{cn_surprise}" for vn in vns])
+    edata = eventdata.filter(regex=pat, axis=1)
 
-        # Export data
-        pat = "SITEID|STATE|MAJOR_FLOOD|WATERYEAR"
+    idx = eventdata.filter(regex="SPECIFICFLOW", axis=1).squeeze().notnull()
+    idx &= eventdata.MAJOR_FLOOD.notnull()
+    edata = edata.loc[idx, :]
 
-        vns = [re.sub("SPECIFIC", "", re.sub("RUNOFF", "VOL", vn)) for vn in varnames]
-        pat += "|"+"|".join([f"{vn}_{marginal}-{cn_surprise}" for vn in vns])
-        edata = eventdata.filter(regex=pat, axis=1)
-        idx = eventdata.filter(regex="SPECIFICFLOW", axis=1).squeeze().notnull()
-        idx &= eventdata.MAJOR_FLOOD.notnull()
-        edata = edata.loc[idx, :]
+    for cn in ["SITEID", "MAJOR_FLOOD"]:
+        counts = edata.groupby(cn).apply(lambda x: x.notnull().sum())
+        counts.loc[:, "diff"] = counts.iloc[:, 0]-counts.iloc[:, 1]
+        if cn == "MAJOR_FLOOD":
+            idx = counts.index[counts.index.isin(major_floods.index)]
+            st = major_floods.START_DATE[idx].astype(np.int64)
+            en = major_floods.START_DATE[idx].astype(np.int64)
+            dt = pd.to_datetime((st+en)/2)
+            counts.loc[:, "DATE"] = pd.NaT
+            counts.loc[idx, "DATE"] = dt.values
+            counts = counts.sort_values("DATE")
+        else:
+            counts = counts.sort_values("diff", ascending=False)
 
-        for cn in ["SITEID", "MAJOR_FLOOD"]:
-            counts = edata.groupby(cn).apply(lambda x: x.notnull().sum())
-            counts.loc[:, "diff"] = counts.iloc[:, 0]-counts.iloc[:, 1]
-            if cn == "MAJOR_FLOOD":
-                idx = counts.index[counts.index.isin(major_floods.index)]
-                st = major_floods.START_DATE[idx].astype(np.int64)
-                en = major_floods.START_DATE[idx].astype(np.int64)
-                dt = pd.to_datetime((st+en)/2)
-                counts.loc[:, "DATE"] = pd.NaT
-                counts.loc[idx, "DATE"] = dt.values
-                counts = counts.sort_values("DATE")
-            else:
-                counts = counts.sort_values("diff", ascending=False)
+        fc = fimg / f"{fe.stem}_C{censored}_counts_{cn}.csv"
+        counts.to_csv(fc)
 
-            fc = fimg / f"{fe.stem}_C{censored}_counts_{cn}.csv"
-            counts.to_csv(fc)
+    # Fig dimensions
+    mosaic = [[vn] for vn in varnames]
+    ncols, nrows = len(mosaic[0]), len(mosaic)
 
-        # Fig dimensions
-        mosaic = [[vn] for vn in varnames]
-        ncols, nrows = len(mosaic[0]), len(mosaic)
+    plt.close("all")
+    nrows, ncols = len(mosaic), len(mosaic[0])
+    fig = plt.figure(figsize=(axwidth*ncols, axheight*nrows),
+                     layout="constrained")
 
-        plt.close("all")
-        nrows, ncols = len(mosaic), len(mosaic[0])
-        fig = plt.figure(figsize=(axwidth*ncols, axheight*nrows),
-                         layout="constrained")
+    wr = [2, 1] if ncols == 2 else [1]
+    kw = dict(width_ratios=wr, hspace=0.1)
+    axs = fig.subplot_mosaic(mosaic, gridspec_kw=kw)
+    highlighted_any = set()
 
-        wr = [2, 1] if ncols==2 else [1]
-        kw = dict(width_ratios=wr, hspace=0.1)
-        axs = fig.subplot_mosaic(mosaic, gridspec_kw=kw)
-        highlighted_any = set()
+    # Plot
+    for iax, (varname, ax) in enumerate(axs.items()):
+        # Get surprise data
+        vn = re.sub("SPECIFIC", "", varname)
+        vn = re.sub("RUNOFF", "VOL", vn)
+        col_value = next(cn for cn in edata.columns \
+            if re.search(vn, cn))
+        mfdata = pd.pivot_table(edata, index="SITEID",
+                                columns="MAJOR_FLOOD",
+                                values=col_value)
 
-        # Plot
-        for iax, (varname, ax) in enumerate(axs.items()):
-            # Get surprise data
-            vn = re.sub("SPECIFIC", "", varname)
-            vn = re.sub("RUNOFF", "VOL", vn)
-            col_value = next(cn for cn in edata.columns \
-                if re.search(vn, cn))
-            mfdata = pd.pivot_table(edata, index="SITEID",
-                                    columns="MAJOR_FLOOD",
-                                    values=col_value)
+        # .. re-order floods
+        for cn in major_floods.index:
+            if not cn in mfdata.columns:
+                mfdata.loc[:, cn] = np.nan
 
-            # .. re-order floods
-            for cn in major_floods.index:
-                if not cn in mfdata.columns:
-                    mfdata.loc[:, cn] = np.nan
+        mfdata = mfdata.loc[:, major_floods.index]
+        mfdata.columns = [re.sub("-.*", "", n) \
+                            for n in major_floods.SHORTNAME]
 
-            mfdata = mfdata.loc[:, major_floods.index]
-            mfdata.columns = [re.sub("-.*", "", n) \
-                                for n in major_floods.SHORTNAME]
+        # Highlighted floods
+        means = mfdata.mean()
+        highlighted = means[means.index!=fname_22].nlargest(4).index.tolist()
+        highlighted += [fname_22]
+        highlighted_any.update(set(highlighted))
 
-            # Highlighted floods
-            means = mfdata.mean()
-            highlighted = means[means.index!=fname_22].nlargest(4).index.tolist()
-            highlighted += [fname_22]
-            highlighted_any.update(set(highlighted))
+        # Boxplot
+        xtk = np.arange(mfdata.shape[1])
+        xlim = xtk[0]-0.5, xtk[-1]+0.5
 
-            # Boxplot
-            xtk = np.arange(mfdata.shape[1])
-            xlim = xtk[0]-0.5, xtk[-1]+0.5
+        for ifn, (fn, se) in enumerate(mfdata.items()):
+            # .. colors
+            col = "tab:blue"
+            if fn in highlighted:
+                col = color_22 if fn==fname_22 else color_others
 
-            for ifn, (fn, se) in enumerate(mfdata.items()):
-                # .. colors
-                col = "tab:blue"
-                if fn in highlighted:
-                    col = color_22 if fn==fname_22 else color_others
+            wl, q1, med, q3, wh = se.quantile([0.05, 0.25, 0.5, 0.75, 0.95])
+            mean = se.mean()
 
-                wl, q1, med, q3, wh = se.quantile([0.05, 0.25, 0.5, 0.75, 0.95])
-                mean = se.mean()
-
-                # .. Feb22 highlight
-                if fn == fname_22:
-                    rec = Rectangle((xlim[0], q1), xlim[1]-xlim[0], q3-q1, \
-                                        facecolor=col, alpha=0.2)
-                    ax.add_patch(rec)
-                    ax.plot(xlim, [mean, mean], color=col, lw=1)
-
-                # .. whiskers
-                x = xtk[ifn]
-                dx = 0.3
-                #rec = Rectangle((x-dx/2, wl), dx, wh-wl,\
-                #                    facecolor=col, alpha=0.6)
-                #ax.add_patch(rec)
-                # .. boxes
-                dx = 0.9
-                rec = Rectangle((x-dx/2, q1), dx, q3-q1,\
-                                    facecolor=col, alpha=1.0)
+            # .. Feb22 highlight
+            if fn == fname_22:
+                rec = Rectangle((xlim[0], q1), xlim[1]-xlim[0], q3-q1, \
+                                    facecolor=col, alpha=0.2)
                 ax.add_patch(rec)
+                ax.plot(xlim, [mean, mean], color=col, lw=1)
 
-                # .. points
-                dx = 0.3
-                if not hide_points:
-                    xx = x+dx/2*np.random.uniform(-1, 1, len(se))
-                    ax.plot(xx, se, "o", ms=6, mfc=col, mec="w", alpha=0.5)
+            # .. boxes
+            x = xtk[ifn]
+            dx = 0.9
+            rec = Rectangle((x-dx/2, q1), dx, q3-q1,\
+                                facecolor=col, alpha=1.0)
+            ax.add_patch(rec)
 
-                # .. means
-                ax.plot(x, mean, "o", mec=col, ms=8, mfc="w", lw=2)
-                if fn in highlighted:
-                    dy = 0.01
-                    ax.text(x, mean+dy, f"{mean:0.2f}", color=col, fontweight="bold", \
-                            va="bottom", ha="center", fontsize=15, \
-                            path_effects=[pe.withStroke(linewidth=7, \
-                                                foreground="w")])
+            # .. points
+            dx = 0.2
+            if not hide_points:
+                xx = x+dx/2*np.random.uniform(-1, 1, len(se))
+                ax.plot(xx, se, "o", ms=6, mfc=col, mec="w", alpha=0.5)
 
-            y0, y1 = (-0.1, 0.4) #if marginal=="GEV" else (-0.2, 0.5)
-            ax.set_ylim((y0, y1))
+            # .. means
+            ax.plot(x, mean, "o", mec=col, ms=8, mfc="w", lw=2)
+            if fn in highlighted:
+                dy = 0.02
+                ax.text(x, mean+dy, f"{mean:0.2f}", color=col, fontweight="bold",
+                        va="bottom", ha="center", fontsize=15,
+                        path_effects=[pe.withStroke(linewidth=7,
+                                                    foreground="w")])
+        y0, y1 = (-0.1, 0.4)
+        ax.set_ylim((y0, y1))
 
-            # decorate
-            if varname==mosaic[-1][0]:
-                ax.set_xticks(xtk)
-                ax.set_xticklabels(mfdata.columns.to_list())
-                ax.tick_params(axis="x", labelrotation=90)
-            else:
-                ax.set_xticklabels([])
-                ax.set_xticks([])
-                ax.spines.bottom.set_visible(False)
+        # decorate
+        if varname==mosaic[-1][0]:
+            ax.set_xticks(xtk)
+            ax.set_xticklabels(mfdata.columns.to_list())
+            ax.tick_params(axis="x", labelrotation=90)
+        else:
+            ax.set_xticklabels([])
+            ax.set_xticks([])
+            ax.spines.bottom.set_visible(False)
 
-            ax.set_xlim(xlim)
+        ax.set_xlim(xlim)
 
-            # Format spines
-            format_spines(ax)
+        # Format spines
+        format_spines(ax)
 
-            # Set labels
-            vartxt = varname.lower()
-            if vartxt.startswith("rain_"):
-                n = int(re.search("[0-9]+", varname).group())/24
-                vn = f"Rainfall total - {n:0.0f} days"
-            elif vartxt.startswith("runoff_"):
-                n = int(re.search("[0-9]+", varname).group())/24
-                vn = f"Runoff total - {n:0.0f} days"
-            elif vartxt.startswith("specificflow_peak"):
-                vn = "Specific peak flow"
+        # Set labels
+        vartxt = varname.lower()
+        if vartxt.startswith("rain_"):
+            n = int(re.search("[0-9]+", varname).group())/24
+            vn = f"Rainfall total - {n:0.0f} days"
+        elif vartxt.startswith("runoff_"):
+            n = int(re.search("[0-9]+", varname).group())/24
+            vn = f"Runoff total - {n:0.0f} days"
+        elif vartxt.startswith("specificflow_peak"):
+            vn = "Specific instantaneous peak flow"
 
-            ylabel = "Surprise index [-]"
-            ax.set_ylabel(ylabel, fontsize=ylabel_fontsize)
-            title_txt = vn
+        ylabel = "1% AEP Surprise index [-]"
+        ax.set_ylabel(ylabel, fontsize=ylabel_fontsize)
+        title_txt = vn
 
-            title = f" ({letters[iax]}) {title_txt}"
-            ax.set_title(title, **title_args)
+        title = f" ({letters[iax]}) {title_txt}"
+        ax.set_title(title, **title_args)
 
-        # Set font of x label
-        ax = axs[mosaic[-1][0]]
-        for xlab in ax.get_xticklabels():
-            xlab.set_fontsize(xlabel_fontsize)
-            fn = xlab.get_text()
-            if fn in highlighted_any:
-                col = color_22 if fn == fname_22 else color_others
-                xlab.set_color(col)
-                xlab.set_fontweight("bold")
-                xlab.set_fontsize(15)
+    # Set font of x label
+    ax = axs[mosaic[-1][0]]
+    for xlab in ax.get_xticklabels():
+        xlab.set_fontsize(xlabel_fontsize)
+        fn = xlab.get_text()
+        if fn in highlighted_any:
+            col = color_22 if fn == fname_22 else color_others
+            xlab.set_color(col)
+            xlab.set_fontweight("bold")
+            xlab.set_fontsize(15)
 
-        # Highlight floods
-        ax1 = axs[mosaic[0][0]]
-        _, y1 = ax1.get_ylim()
+    # Highlight floods
+    ax1 = axs[mosaic[0][0]]
+    _, y1 = ax1.get_ylim()
 
-        ax2 = axs[mosaic[-1][0]]
-        cols = mfdata.columns.tolist()
-        y2, _ = ax2.get_ylim()
+    ax2 = axs[mosaic[-1][0]]
+    cols = mfdata.columns.tolist()
+    y2, _ = ax2.get_ylim()
 
-        for fname in mfdata.columns[::3]:
-            xf = cols.index(fname)
-            con = ConnectionPatch(xyA=(xf, y1),
-                                  coordsA=ax1.transData,
-                                  xyB=(xf, y2),
-                                  coordsB=ax2.transData,
-                                  color="0.6", linestyle=":")
-            fig.add_artist(con)
+    for fname in mfdata.columns[::3]:
+        xf = cols.index(fname)
+        con = ConnectionPatch(xyA=(xf, y1),
+                              coordsA=ax1.transData,
+                              xyB=(xf, y2),
+                              coordsB=ax2.transData,
+                              color="0.6", linestyle=":")
+        fig.add_artist(con)
 
-        fp = fimg / (f"surprise"
-                     + f"_{marginal}_C{int(censored)}_H{int(hide_points)}.png")
-        fig.savefig(fp, dpi=fdpi)
+    if varname == varnames[-1]:
+        ax.set_xlabel("Regional flood event", fontsize=20)
+
+    fp = fimg / (f"surprise"
+                 + f"_{marginal}_C{int(censored)}_H{int(hide_points)}.png")
+    fig.savefig(fp, dpi=fdpi)
 
 
 if __name__ == "__main__":
@@ -345,12 +342,13 @@ if __name__ == "__main__":
         description="Surprise index figure", \
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument("-c", "--censored", help="Use censored data",
-                        action="store_true", default=False)
     parser.add_argument("-hp", "--hide_points", help="Show individual points",
                         action="store_true", default=False)
     args = parser.parse_args()
-    censored = args.censored
     hide_points = args.hide_points
 
-    main(censored, hide_points)
+    # Run script for both uncensored and censored fit
+    main(False, "GEV", hide_points, True)
+    main(False, "LOGPEARSON3", hide_points)
+    main(True, "GEV", hide_points)
+    main(True, "LOGPEARSON3", hide_points)

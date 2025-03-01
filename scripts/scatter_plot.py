@@ -20,25 +20,54 @@ warnings.filterwarnings("ignore")
 
 import numpy as np
 import pandas as pd
+from scipy.stats import gaussian_kde
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
 import matplotlib as mpl
 
 # Select backend
-mpl.use("Agg")
+#mpl.use("Agg")
 
 import matplotlib.pyplot as plt
 import matplotlib.transforms as mtransforms
 
 from hydrodiy.plot import putils
 
+def kde(x, y, extent, ngrid=100,
+        levels=[0.9, 0.95, 0.99]):
+    # Fit kernel
+    values = np.column_stack([x, y]).T
+    kernel = gaussian_kde(values)
+
+    # Create interpolation grid
+    xx = np.linspace(extent[0], extent[1], ngrid)
+    yy = np.linspace(extent[2], extent[3], ngrid)
+    X, Y = np.meshgrid(xx, yy)
+    positions = np.vstack([X.ravel(), Y.ravel()])
+    Z = np.reshape(kernel.evaluate(positions).T, X.shape)
+
+    # Defines levels as given probability mass
+    # above threshold
+    threshs = np.linspace(Z.min(), Z.max(), 1000)
+    integ = np.zeros_like(threshs)
+    V = Z / Z.sum()
+    for i, t in enumerate(threshs):
+        integ[i] = V[Z > t].sum()
+
+    pdf_threshs = pd.Series(np.interp(levels, integ[::-1],
+                                      threshs[::-1]),
+                            index=levels).sort_values()
+
+    return X, Y, Z, pdf_threshs
+
+
 def main():
     #----------------------------------------------------------------------
     # Config
     #----------------------------------------------------------------------
-    title1 = "Specific Instantaneous Flow vs Catchment Area"
-    title2 = "Specific Instantaneous Flow vs 5 days runoff total"
+    title1 = "Specific Instantaneous Peak Flow vs. Catchment Area"
+    title2 = "Specific Instantaneous Peak Flow vs. Ten Days Runoff Total"
     plots = {
         title1: dict(varx="CATCHMENTAREA",
                   vary="SPECIFICFLOW_PEAK"),
@@ -47,16 +76,10 @@ def main():
     }
 
     var_axislabels = {
-        "SPECIFICFLOW_PEAK": "Specific flow [m$^3$ s$^{-1}$ km$^{-2}$]",
+        "SPECIFICFLOW_PEAK": "Specific peak flow [m$^3$ s$^{-1}$ km$^{-2}$]",
         "CATCHMENTAREA": "Catchment Area [km$^2$]",
-        "RUNOFF_120H": "Maximum Runoff Total - 5 days [mm]",
-        "RUNOFF_240H": "Maximum Runoff Total - 10 days [mm]"
-        }
-
-    var_titles = {
-        "SPECIFICFLOW_PEAK": "Specific instantaneous peak flow",
-        "RUNOFF_120H": "Maximum Runoff Total - 5 days",
-        "RUNOFF_240H": "Maximum Runoff Total - 10 days"
+        "RUNOFF_120H": "Five days runoff Total [mm]",
+        "RUNOFF_240H": "Ten days runoff Total [mm]"
         }
 
     imgext = "png"
@@ -163,16 +186,18 @@ def main():
 
         # Axis scales
         if varx == "CATCHMENTAREA":
-            ax.set(xscale="log", xlim=(6, 1e5))
+            xlim = 6, 1e5
+            ax.set(xscale="log", xlim=xlim)
         elif varx.startswith("RUNOFF"):
-            _, x1 = ax.get_xlim()
-            ax.set(xscale="log", xlim=(10, x1))
+            xlim = 10, ax.get_xlim()[1]
+            ax.set(xscale="log", xlim=xlim)
 
         if vary.startswith("SPECIFIC"):
-            ax.set(yscale="log", ylim=(5e-2, 8e1))
+            ylim = 1e-1, 8e1
+            ax.set(yscale="log", ylim=ylim)
         elif vary.startswith("RUNOFF"):
-            _, y1 = ax.get_ylim()
-            ax.set(yscale="log", ylim=(10, y1))
+            ylim = 10, ax.get_ylim()[1]
+            ax.set(yscale="log", ylim=ylim)
 
         if title == title1:
             # Max envelop
@@ -230,6 +255,35 @@ def main():
             eq = r"$74\times A^{-0.47}$"
             ax.plot(xx, yy, "--", color="tab:purple", label=f"99% US ({eq})", lw=3)
             ax.set_xlim((x0, x1))
+        else:
+            # Contour plot
+            idx = ~np.isnan(x) & ~np.isnan(y)
+            xlog, ylog = np.log10(x[idx]), np.log10(y[idx])
+            extent = np.log10(np.array([xlim[0], xlim[1], ylim[0], ylim[1]]))
+            levels = [0.9, 0.95, 0.99]
+            Xlog, Ylog, Z, levels = kde(xlog, ylog, extent, levels=levels,
+                                        ngrid=100)
+
+            axi = ax.inset_axes([0, 0, 1, 1])
+            level_colors=["k", "blueviolet", "violet"]
+            CS = axi.contour(Xlog, Ylog, Z, levels=levels.values,
+                             colors=level_colors, lw=2)
+
+            # .. modify contour labels
+            fmt = {}
+            for l in CS.levels:
+                fmt[l] = f"{100 * levels.index[levels == l][0]:0.0f}%"
+
+            axi.clabel(CS, CS.levels, fmt=fmt, colors=level_colors)
+
+            # .. set legend item
+            for i, collec in enumerate(CS.collections):
+                lab = f"KDE probability mass {100 * levels.index[i]:0.0f}%"
+                col = collec.get_edgecolor()
+                lw = collec.get_linewidth()
+                ax.plot([], [], "-", color=col, lw=lw, label=lab)
+
+            axi.axis("off")
 
         # decorate
         xlabel = var_axislabels[varx]
@@ -237,7 +291,7 @@ def main():
         title_full = f"({letters[iax]}) {title}"
         ax.set(xlabel=xlabel, ylabel=ylabel, title=title_full)
         legloc = 1 if title == title1 else 2
-        ax.legend(loc=legloc, fontsize="large", framealpha=0.8)
+        ax.legend(loc=legloc, fontsize="medium", framealpha=0.0)
 
     fp = fimg / f"FIGB_scatterplots.{imgext}"
     fig.savefig(fp, dpi=fdpi)

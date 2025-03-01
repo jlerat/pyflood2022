@@ -159,12 +159,12 @@ def main():
         path_effects=[patheff.withStroke(linewidth=4, foreground="w")],
         textcoords="offset pixels",
         ha="center",
-        fontsize=15,
-        xytext=(0, -80)
+        fontsize=18,
+        xytext=(0, -100)
     )
 
     cities_top_kwargs = cities_below_kwargs.copy()
-    cities_top_kwargs["xytext"] = (-5, 40)
+    cities_top_kwargs["xytext"] = (-5, 60)
 
     #----------------------------------------------------------------------
     # @Folders
@@ -196,13 +196,14 @@ def main():
           & (towns.POPULATION_MIN>=10000)\
           & (towns.NAME!="Nambour")
     towns = towns.loc[idx]
+
     towns = {re.sub(" (\(|-).*", "", t.NAME): (t.xcoord, t.ycoord)
              for _, t in towns.iterrows()}
 
     towns_top = {tn:to for tn, to in towns.items()
                  if re.search("Ball", tn)}
     towns_below = {tn:to for tn, to in towns.items()
-                   if not re.search("Bong|Yarr|Byr|Ball|Gold|Sun", tn)}
+                   if not re.search("Bong|Yarr|Byr|Ball", tn)}
 
     # Streamflow
     fs = fsrc / "streamflow_data_sites_info.csv"
@@ -417,8 +418,7 @@ def main():
                     title = "Prctl.\n[%]\n"
             colb.ax.set_title(title, fontsize=12)
 
-            ax.set_xlim((x0, x1))
-            ax.set_ylim((y0, y1))
+            ax.set(xlim=(x0, x1), ylim=(y0, y1))
 
             # Decorate
             def get_ticks(a0, a1, delta=0.5, eps=1e-2):
@@ -447,13 +447,12 @@ def main():
             ax.xaxis.set_major_locator(ticker.MaxNLocator(3))
             ax.yaxis.set_major_locator(ticker.MaxNLocator(3))
 
-            if aname in ["grid_sm", "grid_rain"]:
-                if aname == "grid_sm":
-                    for art in ax.lines:
-                        if re.search("Capital", art.get_label()):
-                            art.set_label(None)
+            if aname == "grid_sm":
+                for art in ax.lines:
+                    if re.search("Capital", art.get_label()):
+                        art.set_label(None)
 
-                    ax.legend(loc=3, framealpha=1., fontsize="large")
+                ax.legend(loc=3, framealpha=1., fontsize="large")
 
                 # Map of Australia
                 axi = ax.inset_axes([0.65, 0, 0.35, 0.10])
@@ -462,7 +461,6 @@ def main():
                 plot_shape(axi, fshp_coast, color="k", lw=1)
                 axi.set(xticks=[], yticks=[])
                 axi.axis("equal")
-
             else:
                 ax.set_yticks([])
 
