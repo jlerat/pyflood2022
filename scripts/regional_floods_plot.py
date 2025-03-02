@@ -26,10 +26,10 @@ def main():
     # @Config
     #----------------------------------------------------------------------
     selected_floods = [
-        "Feb74",
+        #"Feb74",
         #"Aug86",
         "QLD-Dec10",
-        "Jan11",
+        #"Jan11",
         #"Jul16",
         "Feb22"
     ]
@@ -156,13 +156,12 @@ def main():
 
             # Draw legend
             if fid == mfloods.index[-1]:
-                ax.legend()
-                leg = ax.get_legend()
+                handles, labels = ax.get_legend_handles_labels()
                 title = "Specific instantaneous peak flow "\
                         + r"[m$^3$.s$^{-1}$.km$^{-2}$]"
                 axleg = axs["legend"]
-                leg = axleg.legend(handles=leg.legendHandles,
-                             labels=[text.get_text() for text in leg.get_texts()],
+                leg = axleg.legend(handles=handles,
+                             labels=labels,
                              loc="center", title=title, ncol=len(qcuts),
                              framealpha=0, fontsize="large",
                              bbox_to_anchor=[0.5, 0.5])

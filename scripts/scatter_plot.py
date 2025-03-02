@@ -34,8 +34,7 @@ import matplotlib.transforms as mtransforms
 
 from hydrodiy.plot import putils
 
-def kde(x, y, extent, ngrid=100,
-        levels=[0.9, 0.95, 0.99]):
+def kde(x, y, extent, ngrid=100, levels=[0.9, 0.95, 0.99]):
     # Fit kernel
     values = np.column_stack([x, y]).T
     kernel = gaussian_kde(values)
@@ -58,8 +57,7 @@ def kde(x, y, extent, ngrid=100,
     pdf_threshs = pd.Series(np.interp(levels, integ[::-1],
                                       threshs[::-1]),
                             index=levels).sort_values()
-
-    return X, Y, Z, pdf_threshs
+    return X, Y, Z, pdf_threshs, kernel
 
 
 def main():
@@ -143,7 +141,7 @@ def main():
     fig = plt.figure(figsize=(axwidth*ncols, axheight*nrows),
                      layout="tight")
     axs = fig.subplot_mosaic(mosaic)
-
+    facts = {}
     for iax, (title, ax) in enumerate(axs.items()):
         varx = plots[title]["varx"]
         vary = plots[title]["vary"]
@@ -180,7 +178,8 @@ def main():
                 continue
 
             # Plot NR 2022
-            lab = f"{re.sub('.*-', '', mfid)} regional event"
+            n = len(xf)
+            lab = f"{re.sub('.*-', '', mfid)} regional event ({n} site events)"
             ax.plot(xf, yf, mfinfo.marker, color=mfinfo.color,
                     mec="0.3", label=lab)
 
@@ -241,6 +240,10 @@ def main():
             ax.plot(uu, vv, "k-", label=f"99% AUS ({eq})", lw=3)
             ax.set_xlim((x0, x1))
 
+            i2022 = df.MAJOR_FLOOD == "NorthernRivers-Feb22"
+            above_au = np.log(y[i2022]) - a - b * np.log(x[i2022])
+            above_au = int((above_au >= 0).sum())
+
             # Reference curves
             x0, x1 = ax.get_xlim()
             xx = np.logspace(math.log10(x0), math.log10(x1), 500)
@@ -255,14 +258,24 @@ def main():
             eq = r"$74\times A^{-0.47}$"
             ax.plot(xx, yy, "--", color="tab:purple", label=f"99% US ({eq})", lw=3)
             ax.set_xlim((x0, x1))
+
+            above_us = np.log(y[i2022]) - math.log(74) + 0.47 * np.log(x[i2022])
+            above_us = int((above_us >= 0).sum())
+
         else:
             # Contour plot
             idx = ~np.isnan(x) & ~np.isnan(y)
             xlog, ylog = np.log10(x[idx]), np.log10(y[idx])
             extent = np.log10(np.array([xlim[0], xlim[1], ylim[0], ylim[1]]))
-            levels = [0.9, 0.95, 0.99]
-            Xlog, Ylog, Z, levels = kde(xlog, ylog, extent, levels=levels,
-                                        ngrid=100)
+
+            Xlog, Ylog, Z, levels, kernel = kde(xlog, ylog, extent, ngrid=100)
+
+            i2022 = df.MAJOR_FLOOD.loc[idx] == "NorthernRivers-Feb22"
+            obs = np.vstack([xlog[i2022], ylog[i2022]])
+            pobs = kernel.evaluate(obs)
+            between_95_99 = (pobs >= levels.loc[0.99]) & (pobs < levels.loc[0.95])
+            between_95_99 = int(between_95_99.sum())
+            outside_of_99 = int((pobs < levels.loc[0.99]).sum())
 
             axi = ax.inset_axes([0, 0, 1, 1])
             level_colors=["k", "blueviolet", "violet"]
@@ -293,9 +306,24 @@ def main():
         legloc = 1 if title == title1 else 2
         ax.legend(loc=legloc, fontsize="medium", framealpha=0.0)
 
+        facts[title] = {
+            "number_of_sites": len(df.SITEID.unique()),
+            "number_of_events": len(x)
+            }
+
+        if title == title1:
+            facts[title]["2022_above_99AU"] = above_au
+            facts[title]["2022_above_99US"] = above_us
+        elif title == title2:
+            facts[title]["2022_between_95_99"] = between_95_99
+            facts[title]["2022_outside_of_99"] = outside_of_99
+
     fp = fimg / f"FIGB_scatterplots.{imgext}"
     fig.savefig(fp, dpi=fdpi)
 
+    ff = fp.parent / f"{fp.stem}_facts.json"
+    with ff.open("w") as fo:
+        json.dump(facts, fo, indent=4)
 
 if __name__ == "__main__":
     main()
