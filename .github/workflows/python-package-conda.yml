@@ -28,21 +28,20 @@ jobs:
       - name: Create conda environment 
         run: |
            source $CONDA/etc/profile.d/conda.sh
-           conda env create -f env_tiny.yml
+           conda env create -f env_pyflood2022.yml
 
       - name: Run scripts
         run: |
           source $CONDA/etc/profile.d/conda.sh
-          conda activate env_tiny
+          conda activate env_pyflood2022
           cd $GITHUB_WORKSPACE
-          python scripts/map_plot.py
-          python scripts/propag_plot.py
-          python scripts/scatter_plot.py
-          python scripts/surprise_plot.py
-          python scripts/surprise_plot.py -c
+          for file in scripts/*.py; do
+             echo Running $file
+             python $file
+          done  
         
       - name: Upload images
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: images
           path: images/*/*.png
