@@ -12,16 +12,11 @@
 import sys, os, re, json, math
 import argparse
 from pathlib import Path
-from itertools import product as prod
 
 import warnings
 warnings.filterwarnings("ignore")
 
-from datetime import datetime
-
-from dateutil.relativedelta import relativedelta as delta
 from string import ascii_lowercase as letters
-from calendar import month_abbr as months
 
 import numpy as np
 import pandas as pd
@@ -135,7 +130,6 @@ def main(censored, marginal, hide_points, clear=False):
     #------------------------------------------------------------
     # Get data
     #------------------------------------------------------------
-
     # Site info
     fs = fsrc / "sites_info.csv"
     sites = pd.read_csv(fs, index_col="STATIONID", skiprows=9)
@@ -296,8 +290,8 @@ def main(censored, marginal, hide_points, clear=False):
 
         ylabel = "1% AEP Surprise index [-]"
         ax.set_ylabel(ylabel, fontsize=ylabel_fontsize)
-        title_txt = vn
 
+        title_txt = vn
         title = f" ({letters[iax]}) {title_txt}"
         ax.set_title(title, **title_args)
 

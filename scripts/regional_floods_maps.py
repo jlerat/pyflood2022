@@ -48,7 +48,7 @@ def main():
 
     fsrc  = froot / "data"
 
-    fimg = froot / "images" / "regional_floods"
+    fimg = froot / "images" / "regional_floods_maps"
     fimg.mkdir(exist_ok=True, parents=True)
 
     fshp_coast = fsrc / "gis" / "australia.shp"
@@ -152,7 +152,14 @@ def main():
 
             txt = f"{len(x)} site events"
             ax.text(0.02, 0.02, txt, ha="left", va="bottom",
-                    transform=ax.transAxes, fontweight="bold")
+                    transform=ax.transAxes, fontweight="bold",
+                    fontsize=11)
+
+            txt = re.sub("/$", "", re.sub(" .*", "", finfo.URL))
+            txt = re.split("/", txt)
+            txt = "/".join(txt[:-1]) + f"\n/{txt[-1]}"
+            ax.text(0.98, 0.02, txt, ha="right", va="bottom",
+                    transform=ax.transAxes, fontsize=10)
 
             # Draw legend
             if fid == mfloods.index[-1]:

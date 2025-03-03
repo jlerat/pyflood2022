@@ -255,6 +255,11 @@ def main():
             aggmax[(24*dur, "awap")] = (nc[name][idur, :, :].filled(),
                                         awllons, awllats)
 
+    # --- flood data ---
+    fe = fsrc / "floods" / "flood_data_censored.zip"
+    eventdata = pd.read_csv(fe, dtype={"siteid": str},
+                            parse_dates=["FLOW_TIME_OF_PEAK"], skiprows=9)
+
     #----------------------------------------------------------------------
     # @Process
     #----------------------------------------------------------------------
@@ -291,6 +296,26 @@ def main():
                 area = sinfo["CATCHMENTAREA[km2]"]
                 qsmax = qmax/area
 
+                idx = eventdata.SITEID == siteid
+                idx &= eventdata.MAJOR_FLOOD == "NorthernRivers-Feb22"
+                if idx.sum() > 0:
+                    finfo = eventdata.loc[idx].squeeze()
+                    q100 = finfo.loc["FLOW_PEAK_C02_GEV-Q100-ALL[perc]"]
+
+                    x0, x1 = ax.get_xlim()
+                    xtxt = 0.98 * x0 + 0.02 * x1
+                    y0, y1 = ax.get_ylim()
+                    if q100 > y1:
+                        ytxt = 0.98 * y1 + 0.02 * y0
+                        va = "top"
+                    else:
+                        ytxt = q100 + (y1 - y0) * 1e-2
+                        ax.plot([x0, (x0 + x1) / 2], [q100]*2, "k--")
+                        va = "bottom"
+
+                    txt = f"1% AEP = {round(q100, -1):0.0f} "+ r"m$^3$.s$^{-1}$"
+                    ax.text(xtxt, ytxt, txt, ha="left", va=va)
+
                 sname = get_shortname(sinfo.NAME)
                 title = f"({letters[iax]}) {sname} ({area:0.0f} km$^2$)"
                 ylab = r"streamflow [m$^3$ s$^{-1}$]" if se.name.startswith("STR")\
@@ -307,14 +332,6 @@ def main():
                            markerfacecolor="tab:red",
                            markeredgewidth=1,
                            zorder=1000)
-
-                #lab = "\n".join(re.split(" ", sname))
-                #axmap.annotate(lab, (x, y),
-                #               va="bottom", ha="center",
-                #               textcoords="offset pixels",
-                #               xytext=(0, 30),
-                #               fontsize=15,
-                #               path_effects=[patheff.withStroke(linewidth=4, foreground="w")])
 
                 # Connecting line
                 imo = np.where(mosaic_array == f"tsq_{siteid}")
