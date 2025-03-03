@@ -279,6 +279,8 @@ def main():
         anames = ["grid_sm", "grid_rain"]
         anames += [n for n in list(axs.keys()) if not n.startswith("grid")]
 
+        flood_info = {}
+
         for iax, aname in enumerate(anames):
             ax = axs[aname]
             if aname.startswith("tsq"):
@@ -301,6 +303,16 @@ def main():
                     idx &= eventdata.MAJOR_FLOOD == "NorthernRivers-Feb22"
                     finfo = eventdata.loc[idx].squeeze()
                     q100 = finfo.loc["FLOW_PEAK_C02_GEV-Q100-ALL[perc]"]
+
+                    # Maximum flow rise in 12h
+                    rise = {}
+                    for delta in [1, 3, 6, 12]:
+                        diff = se - se.shift(freq=f"{delta}h")
+                        rise[f"max_{delta}h_rise[m3.s-1]"] =  diff.max()
+                        rise[f"max_{delta}h_rise_time"] = str(diff.idxmax())
+
+                    flood_info[siteid] = rise
+
                 else:
                     # See Engeny (2013), Table 4.5
                     q100 = 12.93
@@ -490,6 +502,9 @@ def main():
         fp = fimg / f"FIGA_{source}_rainfall_{dur}h.{imgext}"
         fig.savefig(fp, dpi=fdpi)
 
+        fi = fp.parent / f"{fp.stem}.json"
+        with fi.open("w") as fo:
+            json.dump(flood_info, fo, indent=4)
 
 if __name__ == "__main__":
     main()
