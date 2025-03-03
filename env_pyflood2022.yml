@@ -1,4 +1,4 @@
-name: env_tiny
+name: env_pyflood2022
 channels:
   - conda-forge
   - defaults
