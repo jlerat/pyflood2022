@@ -32,8 +32,6 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.transforms as mtransforms
 
-from hydrodiy.plot import putils
-
 def kde(x, y, extent, ngrid=100, levels=[0.9, 0.95, 0.99]):
     # Fit kernel
     values = np.column_stack([x, y]).T
