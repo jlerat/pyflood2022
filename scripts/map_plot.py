@@ -296,25 +296,31 @@ def main():
                 area = sinfo["CATCHMENTAREA[km2]"]
                 qsmax = qmax/area
 
-                idx = eventdata.SITEID == siteid
-                idx &= eventdata.MAJOR_FLOOD == "NorthernRivers-Feb22"
-                if idx.sum() > 0:
+                if siteid != "203402":
+                    idx = eventdata.SITEID == siteid
+                    idx &= eventdata.MAJOR_FLOOD == "NorthernRivers-Feb22"
                     finfo = eventdata.loc[idx].squeeze()
                     q100 = finfo.loc["FLOW_PEAK_C02_GEV-Q100-ALL[perc]"]
+                else:
+                    # See Engeny (2013), Table 4.5
+                    q100 = 12.93
 
-                    x0, x1 = ax.get_xlim()
-                    xtxt = 0.98 * x0 + 0.02 * x1
-                    y0, y1 = ax.get_ylim()
-                    if q100 > y1:
-                        ytxt = 0.98 * y1 + 0.02 * y0
-                        va = "top"
-                    else:
-                        ytxt = q100 + (y1 - y0) * 1e-2
-                        ax.plot([x0, (x0 + x1) / 2], [q100]*2, "k--")
-                        va = "bottom"
+                x0, x1 = ax.get_xlim()
+                xtxt = 0.98 * x0 + 0.02 * x1
+                y0, y1 = ax.get_ylim()
+                if q100 > y1:
+                    ytxt = 0.98 * y1 + 0.02 * y0
+                    va = "top"
+                else:
+                    ytxt = q100 + (y1 - y0) * 1e-2
+                    ax.plot([x0, (x0 + x1) / 2], [q100]*2, "k--")
+                    va = "bottom"
 
+                if siteid == "203402":
+                    txt = f"1% AEP = {round(q100, 1):0.1f} m"
+                else:
                     txt = f"1% AEP = {round(q100, -1):0.0f} "+ r"m$^3$.s$^{-1}$"
-                    ax.text(xtxt, ytxt, txt, ha="left", va=va)
+                ax.text(xtxt, ytxt, txt, ha="left", va=va)
 
                 sname = get_shortname(sinfo.NAME)
                 title = f"({letters[iax]}) {sname} ({area:0.0f} km$^2$)"
