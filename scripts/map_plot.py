@@ -335,9 +335,12 @@ def main():
                 ax.text(xtxt, ytxt, txt, ha="left", va=va)
 
                 sname = get_shortname(sinfo.NAME)
-                title = f"({letters[iax]}) {sname} ({area:0.0f} km$^2$)"
-                ylab = r"streamflow [m$^3$ s$^{-1}$]" if se.name.startswith("STR")\
-                    else "water level [m]"
+                if se.name.startswith("STR"):
+                    title = f"({letters[iax]}) Streamflow at {sname} ({area:0.0f} km$^2$)"
+                    ylab = r"streamflow [m$^3$ s$^{-1}$]"
+                else:
+                    title = f"({letters[iax]}) Water level at {sname} ({area:0.0f} km$^2$)"
+                    ylab = "water level [m]"
 
                 ax.set(xlabel="", ylabel=ylab, title=title)
                 ax.yaxis.set_major_locator(ticker.MaxNLocator(4))
