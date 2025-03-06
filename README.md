@@ -32,7 +32,7 @@ The data provided in this package is in the data/floods folder and includes
 * [awap_data.nc](data/floods/awap_data.nc): Gridded rainfall data during the
   2022 flood.
 
-* [awral_data.nc](data/floods/awra_v6_data.nc): Gridded soil moisture data during the
+* [awra_v6_data.nc](data/floods/awra_v6_data.nc): Gridded soil moisture data during the
   2022 flood.
 
 ## Code
