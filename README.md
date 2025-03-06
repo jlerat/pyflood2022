@@ -32,7 +32,7 @@ The data provided in this package is in the data/floods folder and includes
 * [awap_data.nc](data/floods/awap_data.nc): Gridded rainfall data during the
   2022 flood.
 
-* [awral_data.nc](data/floods/awral_data.nc): Gridded soil moisture data during the
+* [awra_v6_data.nc](data/floods/awra_v6_data.nc): Gridded soil moisture data during the
   2022 flood.
 
 ## Code
@@ -42,7 +42,9 @@ The code used to generate the figures of the paper are
 * [propag_plot.py](scripts/propag_plot.py): Script to generate Figure 2 (peak
   time informations).
 * [scatter_plot.py](scripts/scatter_plot.py): Script to generate Figure 3 (scatter plots).
-* [surprise_plot.py](scripts/surprise_plot.py): Script to generate Figure 4 (statistics of the surprise index).
+* [regional_floods_maps.py](scripts/regional_floods_maps.py): Script to generate Figure 4 (maps of regional flood events).
+* [surprise_plot.py](scripts/surprise_plot.py): Script to generate Figure 5 (statistics of the surprise index).
+* [regional_floods_stats.py](scripts/regional_floods_maps.py): Script to generate Figures from the supplementary material (statistics related to regional flood events).
 
 ## Attribution
 This project is licensed under the [MIT License](LICENSE), which allows for free use, modification, and distribution of the code under the terms of the license.
