@@ -1,9 +1,9 @@
 # --------------------------------------------------
-# nrow : 1131
+# nrow : 1125
 # ncol : 5
 # description : Site information
-# reference : Lerat and Vaze (2024), Communication Earth and Environment, submitted
-# time_generated : 2024-12-19 15:40:36
+# reference : Lerat and Vaze (2025), Communication Earth and Environment, submitted
+# time_generated : 2025-03-01 14:32:00
 # author : Julien Lerat, CSIRO Enviromment
 # source_file : DATA_prepare_flood_data.py
 # --------------------------------------------------
@@ -875,7 +875,6 @@ STATIONID,LONGITUDE[deg],LATITUDE[deg],CATCHMENTAREA[km2],STATE,NAME
 606195,116.57525,-34.80692,250.15000,WA,Weld River - Ordnance Rd Crossing
 606218,116.18778,-34.74868,392.44000,WA,Gardner River - Baldania Ck Conflu
 607003,116.27774,-34.36939,2821.12000,WA,Warren River - Wheatley Farm
-607004,116.45852,-34.33109,666.66000,WA,Perup River - Quabicup Hill
 607007,116.67896,-34.25025,983.13000,WA,Tone River - Bullilup
 607009,116.02407,-34.43932,253.65000,WA,Lefroy Brook - Pemberton Weir
 607010,116.32859,-34.48389,2.94000,WA,Six Mile Brook Tributary - March Rd Catchment E
@@ -1088,18 +1087,15 @@ A5131007,137.00190,-35.98410,,SA,Stun'sail-Boom River at South Coast Road Bridge
 A5131014,137.51870,-35.69800,480.20000,SA,Cygnet River upstream Koala Lodge
 G0050116,133.23998,-24.55181,7500.00000,NT,Finke River - S Road Xng
 G0060126,133.86485,-23.72842,502.00000,NT,Todd River - Heavitree Gap
-G8100106,129.01113,-15.39799,1015.00000,NT,Border Crk - Weaber Range
 G8100225,129.06466,-15.40378,3496.00000,NT,Keep River - Legune Rd Xng
 G8110004,130.03131,-15.76512,2342.00000,NT,East Baines River - U/S Victoria Hwy
 G8110006,129.73856,-15.93403,10204.00000,NT,West Baines River - Victoria Hwy
 G8110007,130.96380,-15.55151,44900.00000,NT,Victoria River - Coolibah Homestead
 G8110016,130.83981,-17.44601,4916.00000,NT,Upper Victoria River - Wave Hill Police Station
-G8110107,129.57527,-15.94176,234.00000,NT,Saddle Crk - Victoria Hwy
 G8140001,132.25690,-14.46222,8640.00000,NT,Katherine River - Railway Bridge
 G8140011,132.41166,-15.08549,6290.00000,NT,Dry River - Manbulloo Boundary
 G8140040,130.73523,-13.82973,47100.00000,NT,Daly River - Mount Nancar
 G8140041,130.80143,-13.90412,46300.00000,NT,Daly River - Gourley
-G8140042,131.05228,-13.85419,41000.00000,NT,Daly River - 2Km D/S Beeboom Xng
 G8140060,131.94412,-14.03187,445.00000,NT,Cullen River - Stuart Hwy Railway Bridge
 G8140063,131.33998,-13.79710,842.00000,NT,Douglas River - D/S Old Douglas Homestead
 G8140067,131.57405,-14.36537,35800.00000,NT,Daly River - U/S Dorisvale Xng
@@ -1118,12 +1114,10 @@ G8140538,131.23313,-13.81447,,NT,Douglas River - Tippera Waterhole
 G8150010,130.95125,-13.02430,360.00000,NT,Finniss River - Batchelor Dam Site
 G8150180,130.76241,-12.96950,1048.00000,NT,Finniss River - Gitchams Xng
 G8170002,131.10864,-13.24147,632.00000,NT,Adelaide River - Railway Bridge
-G8170005,131.27043,-12.94854,1606.00000,NT,Adelaide River - U/S Marrakai Xng
 G8170008,131.08490,-13.41713,122.00000,NT,Adelaide River - D/S Daly Road
 G8170075,131.13083,-12.87832,28.00000,NT,Manton River - U/S Manton Dam
 G8170084,131.23371,-13.09001,1246.00000,NT,Adelaide River - Tortilla Flats
 G9030176,133.20750,-14.94336,5610.00000,NT,Roper River - D/S Mataranka Homestead
-G9030514,133.36165,-14.32185,,NT,Waterhouse River - D/S Diljin Hill
 G9070132,136.08473,-16.45189,10400.00000,NT,Mcarthur River - Mim Pump
 203402,153.30254,-28.78541,,,Woodlawn College
 203403,153.28960,-28.99000,4325.00000,NSW,Richmond River At Coraki

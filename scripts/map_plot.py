@@ -117,7 +117,7 @@ def main():
     imgext = "png"
 
     # plot mosaic
-    sids = ["138110", "202001", "203014", "203010"]
+    sids = ["138110", "202001", "203014", "203402"]
     mosaic = [["grid_sm", "grid_rain", f"tsq_{sid}"] for sid in sids]
 
     # Rainfall aggregation
@@ -127,11 +127,14 @@ def main():
     start = pd.to_datetime("2022-02-20 07:00")
     end = pd.to_datetime("2022-03-10 08:00")
 
-    time_awra = pd.to_datetime("2022-02-23 09:00")
+    time_awra = pd.to_datetime("2022-02-23")
 
     # time slice to plot
     start_ts_plot = "2022-02-23"
-    end_ts_plot = "2022-03-02"
+    end_ts_plot = "2022-03-04"
+
+    # AWRA variable to plot
+    awra_varname = "rzsm_pfull_prc"
 
     # spatial slice
     x0, x1 = 152.2, 153.67
@@ -156,12 +159,12 @@ def main():
         path_effects=[patheff.withStroke(linewidth=4, foreground="w")],
         textcoords="offset pixels",
         ha="center",
-        fontsize=15,
-        xytext=(0, -80)
+        fontsize=18,
+        xytext=(0, -100)
     )
 
     cities_top_kwargs = cities_below_kwargs.copy()
-    cities_top_kwargs["xytext"] = (-5, 40)
+    cities_top_kwargs["xytext"] = (-5, 60)
 
     #----------------------------------------------------------------------
     # @Folders
@@ -193,35 +196,43 @@ def main():
           & (towns.POPULATION_MIN>=10000)\
           & (towns.NAME!="Nambour")
     towns = towns.loc[idx]
+
     towns = {re.sub(" (\(|-).*", "", t.NAME): (t.xcoord, t.ycoord)
              for _, t in towns.iterrows()}
 
     towns_top = {tn:to for tn, to in towns.items()
                  if re.search("Ball", tn)}
     towns_below = {tn:to for tn, to in towns.items()
-                   if not re.search("Bong|Yarr|Byr|Ball|Gold|Sun", tn)}
+                   if not re.search("Bong|Yarr|Byr|Ball", tn)}
 
     # Streamflow
     fs = fsrc / "streamflow_data_sites_info.csv"
     sites = pd.read_csv(fs, index_col="STATIONID",
                         dtype={"STATIONID":str},
                         skiprows=9)
-    flows = {}
+    flows_waterlevels = {}
     for aname in [n for l in mosaic for n in l]:
         if aname.startswith("grid"):
             continue
         siteid = re.sub(".*_", "", aname)
-        f = fsrc / "floods" / f"streamflow_data_{siteid}.csv"
+        prefix = "waterlevel" if siteid == "203402" else "streamflow"
+        f = fsrc / "floods" / f"{prefix}_data_{siteid}.csv"
         df = pd.read_csv(f, index_col=0, parse_dates=True, \
                             skiprows=9)
-        se = df.loc[:, "STREAMFLOW[m3/sec]"]
-        flows[siteid] = se
+
+        cn = "WATERLEVEL_AHD[m]" if siteid == "203402" \
+            else "STREAMFLOW[m3/sec]"
+        se = df.loc[:, cn]
+        flows_waterlevels[siteid] = se
 
     # -- AWRA --
-    fnc = fsrc / "floods" / "awral_data.nc"
+    fnc = fsrc / "floods" / "awra_v6_data.nc"
     with Dataset(fnc, "r") as nc:
-        argrid = nc["awral_data"][:].filled()
         arvarnames = nc["variable"][:].tolist()
+
+        ivar = arvarnames.index(awra_varname)
+        argrid = nc["awra_v6_daily"][ivar, :, :, :].filled()
+
         artimes = nc["time"]
         artimes = pd.DatetimeIndex(num2date(artimes[:], artimes.units,
                                    only_use_cftime_datetimes=False))
@@ -231,14 +242,23 @@ def main():
     # -- AWAP --
     fnc = fsrc / "floods" / "awap_data.nc"
     with Dataset(fnc, "r") as nc:
-        awgrid = nc["awap_daily_rainfall"][:].filled()
+        awgrid = nc["awap_daily_northern_rivers"][:].filled()
         awllons = nc["longitude"][:].filled()
         awllats = nc["latitude"][:].filled()
 
+        name = "awap_daily_northern_rivers_maxagg"
+        awdurations = nc["time_aggregation"][:].filled()
         aggmax = {}
-        for dur in durations:
-            vname = f"awap_rainfall_total_{dur//24}day_maximum"
-            aggmax[(dur, "awap")] = (nc[vname][:].filled(), awllons, awllats)
+        for idur, dur in enumerate(awdurations):
+            if 24 * dur not in durations:
+                continue
+            aggmax[(24*dur, "awap")] = (nc[name][idur, :, :].filled(),
+                                        awllons, awllats)
+
+    # --- flood data ---
+    fe = fsrc / "floods" / "flood_data_censored.zip"
+    eventdata = pd.read_csv(fe, dtype={"siteid": str},
+                            parse_dates=["FLOW_TIME_OF_PEAK"], skiprows=9)
 
     #----------------------------------------------------------------------
     # @Process
@@ -259,15 +279,18 @@ def main():
         anames = ["grid_sm", "grid_rain"]
         anames += [n for n in list(axs.keys()) if not n.startswith("grid")]
 
+        flood_info = {}
+
         for iax, aname in enumerate(anames):
             ax = axs[aname]
             if aname.startswith("tsq"):
                 siteid = re.sub("ts._", "", aname)
-                if not siteid in flows:
+                if not siteid in flows_waterlevels:
                     continue
 
                 # Flow
-                se = flows[siteid]
+                se = flows_waterlevels[siteid].loc[start_ts_plot:
+                                                   end_ts_plot]
                 se.plot(ax=ax, lw=2)
 
                 sinfo = sites.loc[siteid]
@@ -275,28 +298,73 @@ def main():
                 area = sinfo["CATCHMENTAREA[km2]"]
                 qsmax = qmax/area
 
+                if siteid != "203402":
+                    idx = eventdata.SITEID == siteid
+                    idx &= eventdata.MAJOR_FLOOD == "NorthernRivers-Feb22"
+                    finfo = eventdata.loc[idx].squeeze()
+                    q100 = finfo.loc["FLOW_PEAK_C02_GEV-Q100-ALL[perc]"]
+
+                    # Maximum flow rise in 12h
+                    rise = {}
+                    for delta in [1, 3, 6, 12]:
+                        diff = se - se.shift(freq=f"{delta}h")
+                        rise[f"max_{delta}h_rise[m3.s-1]"] =  diff.max()
+                        rise[f"max_{delta}h_rise_time"] = str(diff.idxmax())
+
+                    flood_info[siteid] = rise
+
+                else:
+                    # See Engeny (2013), Table 4.5
+                    q100 = 12.93
+
+                x0, x1 = ax.get_xlim()
+                xtxt = 0.98 * x0 + 0.02 * x1
+                y0, y1 = ax.get_ylim()
+                if q100 > y1:
+                    ytxt = 0.98 * y1 + 0.02 * y0
+                    va = "top"
+                else:
+                    ytxt = q100 + (y1 - y0) * 1e-2
+                    ax.plot([x0, (x0 + x1) / 2], [q100]*2, "k--")
+                    va = "bottom"
+
+                if siteid == "203402":
+                    txt = f"1% AEP = {round(q100, 1):0.1f} m"
+                else:
+                    txt = f"1% AEP = {round(q100, -1):0.0f} "+ r"m$^3$.s$^{-1}$"
+                ax.text(xtxt, ytxt, txt, ha="left", va=va)
+
                 sname = get_shortname(sinfo.NAME)
-                title = f"({letters[iax]}) {sname} ({area:0.0f} km$^2$)"
-                ax.set(xlabel="", ylabel=r"streamflow [m$^3$ s$^{-1}$]",
-                       title=title)
+                if se.name.startswith("STR"):
+                    title = f"({letters[iax]}) Streamflow at {sname} ({area:0.0f} km$^2$)"
+                    ylab = r"streamflow [m$^3$ s$^{-1}$]"
+                else:
+                    title = f"({letters[iax]}) Water level at {sname} ({area:0.0f} km$^2$)"
+                    ylab = "water level [m]"
+
+                ax.set(xlabel="", ylabel=ylab, title=title)
                 ax.yaxis.set_major_locator(ticker.MaxNLocator(4))
 
                 axmap = axs["grid_rain"]
                 x = sinfo["LONGITUDE[deg]"]
                 y = sinfo["LATITUDE[deg]"]
-                axmap.plot(x, y, "o", ms=12,
+                axmap.plot(x, y, "o", ms=10,
                            markeredgecolor="w",
                            markerfacecolor="tab:red",
-                           markeredgewidth=2,
+                           markeredgewidth=1,
                            zorder=1000)
 
-                lab = "\n".join(re.split(" ", sname))
-                axmap.annotate(lab, (x, y),
-                               va="bottom", ha="center",
-                               textcoords="offset pixels",
-                               xytext=(0, 30),
-                               fontsize=15,
-                               path_effects=[patheff.withStroke(linewidth=4, foreground="w")])
+                # Connecting line
+                imo = np.where(mosaic_array == f"tsq_{siteid}")
+                imo = (imo[0][0], imo[1][0])
+                xp = 0.9 if imo[1]==0 else 0.1
+                yp = 0.5
+                con = ConnectionPatch(\
+                            xyA=(xp, yp), coordsA=ax.transAxes, \
+                            xyB=(x, y), coordsB=axmap.transData, \
+                            color="0.4", lw=1, zorder=10)
+                fig.add_artist(con)
+
                 continue
 
             # Plot config
@@ -314,8 +382,7 @@ def main():
                 bounds = np.unique(np.round(bounds/base)*base)
                 cmap = cmap_rain
             else:
-                ii = arvarnames.index("rzsm_pfull")
-                toplot = argrid[ii, artimes==time_awra, :, :].squeeze()
+                toplot = argrid[artimes==time_awra, :, :].squeeze()
 
                 # .. smooth taking into account coast
                 isnan = np.isnan(toplot)
@@ -380,12 +447,16 @@ def main():
                                 shrink=0.5, aspect=30, anchor=(0., 0.5))
             colb.ax.set_ylim([bounds[0], bounds[-1]])
 
-            title = f"Rainfall\n[mm]\n" if aname=="grid_rain"\
-                    else "Root\nZone\nSoil\nMoist.\n[%sat]\n"
+            if aname == "grid_rain":
+                title = f"Rainfall\n[mm]\n"
+            else:
+                if awra_varname == "rzsm_pfull":
+                    title = "Root\nZone\nSoil\nMoist.\n[%sat]\n"
+                else:
+                    title = "Prctl.\n[%]\n"
             colb.ax.set_title(title, fontsize=12)
 
-            ax.set_xlim((x0, x1))
-            ax.set_ylim((y0, y1))
+            ax.set(xlim=(x0, x1), ylim=(y0, y1))
 
             # Decorate
             def get_ticks(a0, a1, delta=0.5, eps=1e-2):
@@ -401,9 +472,14 @@ def main():
             if aname == "grid_rain":
                 title = f"({letters[iax]}) Maximum {dur}h total rainfall\n"
             else:
+
                 txt = time_awra.strftime("%d %b")
-                title = f"({letters[iax]}) Saturation of soil column"\
-                        + f" (1m depth)\non {txt}"
+                if awra_varname == "rzsm_pfull":
+                    title = f"({letters[iax]}) Saturation of root zone soil column"\
+                        + f"\non {txt}"
+                else:
+                    title = f"({letters[iax]}) Saturation of root zone soil column"\
+                        + f"\nhistorical percentile on {txt}"
 
             ax.set_title(title, fontsize=15)
             ax.xaxis.set_major_locator(ticker.MaxNLocator(3))
@@ -417,7 +493,7 @@ def main():
                 ax.legend(loc=3, framealpha=1., fontsize="large")
 
                 # Map of Australia
-                axi = ax.inset_axes([0.55, 0, 0.45, 0.12])
+                axi = ax.inset_axes([0.65, 0, 0.35, 0.10])
                 axi.plot([x0, x1, x1, x0, x0],
                          [y0, y0, y1, y1, y0], "-", lw=6, color="tab:red")
                 plot_shape(axi, fshp_coast, color="k", lw=1)
@@ -429,6 +505,9 @@ def main():
         fp = fimg / f"FIGA_{source}_rainfall_{dur}h.{imgext}"
         fig.savefig(fp, dpi=fdpi)
 
+        fi = fp.parent / f"{fp.stem}.json"
+        with fi.open("w") as fo:
+            json.dump(flood_info, fo, indent=4)
 
 if __name__ == "__main__":
     main()

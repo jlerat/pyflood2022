@@ -201,10 +201,15 @@ def main():
         ax.view_init(elev=20., azim=-60, roll=0)
 
         if pair == "203402_203014":
-            axi = ax.inset_axes((0.52, 0.66, 0.48, 0.38),
+            axi = ax.inset_axes((0.45, 0.62, 0.55, 0.42),
                                 transform=fig.transFigure)
             fp = fdata / "Eltham2Woodlawn_map_v2.png"
-            axi.imshow(mpimg.imread(fp))
+            img = mpimg.imread(fp)
+            aratio = img.shape[1] / img.shape[0]
+
+            axi.imshow(img,
+                       interpolation="gaussian",
+                       extent=[0, 1, 0, 1./aratio])
             axi.axis("off")
 
         fp = fimg / f"propag_{pair}.{imgext}"
