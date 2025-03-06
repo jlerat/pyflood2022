@@ -46,5 +46,9 @@ jobs:
           name: images
           path: images/*/*.png
  
-        if: ${{ always() }}
-
+      - name: Upload info
+        uses: actions/upload-artifact@v4
+        with:
+          name: info
+          path: images/*/*.json
+ 
