@@ -33,7 +33,7 @@ import matplotlib.pyplot as plt
 from surprise_plot import format_spines
 
 
-def main(clear=False):
+def main(version, clear=False):
     #----------------------------------------------------------------------
     # Config
     #----------------------------------------------------------------------
@@ -80,10 +80,12 @@ def main(clear=False):
     sites = pd.read_csv(fs, index_col="STATIONID", skiprows=9)
 
     # Flood event data
-    fe = fsrc / "floods" / "flood_data_censored.zip" if censored \
-        else fsrc / "floods" / "flood_data.zip"
-    eventdata = pd.read_csv(fe, dtype={"siteid": str},
-                            parse_dates=["FLOW_TIME_OF_PEAK"], skiprows=9)
+    fn = f"flood_data_censored_v{version}.zip" if censored \
+        else f"flood_data_v{version}.zip"
+    fe = fsrc / "floods" / fn
+    skip = 9 if version == 1 else 35
+    eventdata = pd.read_csv(fe, dtype={"SITEID": str},
+                            parse_dates=["FLOW_TIME_OF_PEAK"], skiprows=skip)
 
     # Major australian floods
     fm = fsrc / "floods" / "major_floods.csv"
@@ -220,9 +222,18 @@ def main(clear=False):
 
         ax.set_xlabel(xlabel, fontsize=axlabel_fontsize)
 
-    fp = fimg / "flood_stats.png"
+    fp = fimg / f"flood_stats_v{version}.png"
     fig.savefig(fp, dpi=fdpi)
 
 
 if __name__ == "__main__":
-    main(True)
+    parser = argparse.ArgumentParser(
+        description="Map of recent regional events",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument("-v", "--version", help="Version number",
+                        type=str, default="png")
+    args = parser.parse_args()
+    version = args.version
+
+    main(version, True)

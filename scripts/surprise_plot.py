@@ -84,15 +84,16 @@ def set_logscale(ax):
     ax.set_yticklabels(yticklabs)
 
 
-def main(censored, marginal, hide_points, clear=False):
+def main(version, censored, marginal, hide_points, clear=False):
     #----------------------------------------------------------------------
     # Config
     #----------------------------------------------------------------------
+    print(f"Version = {version}")
     print(f"Censored = {censored}")
     print(f"Marginal = {marginal}")
     print(f"Hide points = {hide_points}\n")
 
-    varnames = ["SPECIFICFLOW_PEAK",
+    varnames = ["LOW_PEAK",
                 "RUNOFF_240H"
                 ]
 
@@ -135,9 +136,11 @@ def main(censored, marginal, hide_points, clear=False):
     sites = pd.read_csv(fs, index_col="STATIONID", skiprows=9)
 
     # Flood event data
-    fe = fsrc / "floods" / "flood_data_censored.zip" if censored \
-        else fsrc / "floods" / "flood_data.zip"
-    eventdata = pd.read_csv(fe, dtype={"siteid": str}, skiprows=9)
+    fn = f"flood_data_censored_v{version}.zip" if censored \
+        else f"flood_data_v{version}.zip"
+    fe = fsrc / "floods" / fn
+    skip = 9 if version == 1 else 35
+    eventdata = pd.read_csv(fe, dtype={"SITEID": str}, skiprows=skip)
 
     # Major australian floods
     fm = fsrc / "floods" / "major_floods.csv"
@@ -152,9 +155,8 @@ def main(censored, marginal, hide_points, clear=False):
     #------------------------------------------------------------
     # Select data
     pat = "SITEID|STATE|MAJOR_FLOOD|WATERYEAR"
-    vns = [re.sub("SPECIFIC", "", re.sub("RUNOFF", "VOL", vn)) for vn in varnames]
-    pcens = 0.2 if censored else 0.
-    pat += "|"+"|".join([f"{vn}_C{pcens*10:02.0f}_{marginal}-{cn_surprise}" for vn in vns])
+    pat += "|"+"|".join([f"{vn}_{marginal}-{cn_surprise}"
+                         for vn in varnames])
     edata = eventdata.filter(regex=pat, axis=1)
 
     idx = eventdata.filter(regex="SPECIFICFLOW", axis=1).squeeze().notnull()
@@ -175,7 +177,7 @@ def main(censored, marginal, hide_points, clear=False):
         else:
             counts = counts.sort_values("diff", ascending=False)
 
-        fc = fimg / f"{fe.stem}_C{censored}_counts_{cn}.csv"
+        fc = fimg / f"{fe.stem}_C{censored}_counts_{cn}_v{version}.csv"
         counts.to_csv(fc)
 
     # Fig dimensions
@@ -195,10 +197,8 @@ def main(censored, marginal, hide_points, clear=False):
     # Plot
     for iax, (varname, ax) in enumerate(axs.items()):
         # Get surprise data
-        vn = re.sub("SPECIFIC", "", varname)
-        vn = re.sub("RUNOFF", "VOL", vn)
-        col_value = next(cn for cn in edata.columns \
-            if re.search(vn, cn))
+        col_value = next(cn for cn in edata.columns
+                         if re.search(varname, cn))
         mfdata = pd.pivot_table(edata, index="SITEID",
                                 columns="MAJOR_FLOOD",
                                 values=col_value)
@@ -291,7 +291,7 @@ def main(censored, marginal, hide_points, clear=False):
         ylabel = "1% AEP Surprise index [-]"
         ax.set_ylabel(ylabel, fontsize=ylabel_fontsize)
 
-        title_txt = vn
+        title_txt = varname.lower()
         title = f" ({letters[iax]}) {title_txt}"
         ax.set_title(title, **title_args)
 
@@ -326,23 +326,26 @@ def main(censored, marginal, hide_points, clear=False):
     if varname == varnames[-1]:
         ax.set_xlabel("Regional flood event", fontsize=20)
 
-    fp = fimg / (f"surprise"
-                 + f"_{marginal}_C{int(censored)}_H{int(hide_points)}.png")
+    fn = f"surprise_{marginal}_C{int(censored)}"\
+         + f"_H{int(hide_points)}_v{version}.png"
+    fp = fimg / fn
     fig.savefig(fp, dpi=fdpi)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(\
-        description="Surprise index figure", \
+    parser = argparse.ArgumentParser(
+        description="Surprise index figure",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-
+    parser.add_argument("-v", "--version", help="Version number",
+                        type=str, default="png")
     parser.add_argument("-hp", "--hide_points", help="Show individual points",
                         action="store_true", default=False)
     args = parser.parse_args()
     hide_points = args.hide_points
+    version = args.version
 
     # Run script for both uncensored and censored fit
-    main(False, "GEV", hide_points, True)
-    main(False, "LOGPEARSON3", hide_points)
-    main(True, "GEV", hide_points)
-    main(True, "LOGPEARSON3", hide_points)
+    main(version, False, "GEV", hide_points, True)
+    main(version, False, "LOGPEARSON3", hide_points)
+    main(version, True, "GEV", hide_points)
+    main(version, True, "LOGPEARSON3", hide_points)

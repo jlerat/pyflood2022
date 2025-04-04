@@ -58,7 +58,7 @@ def kde(x, y, extent, ngrid=100, levels=[0.9, 0.95, 0.99]):
     return X, Y, Z, pdf_threshs, kernel
 
 
-def main():
+def main(version):
     #----------------------------------------------------------------------
     # Config
     #----------------------------------------------------------------------
@@ -101,8 +101,9 @@ def main():
     #------------------------------------------------------------
 
     # Flood event data
-    fe = fsrc / "floods" / "flood_data.zip"
-    eventdata = pd.read_csv(fe, dtype={"SITEID": str}, skiprows=9)
+    fe = fsrc / "floods" / f"flood_data_v{version}.zip"
+    skip = 9 if version == 1 else 35
+    eventdata = pd.read_csv(fe, dtype={"SITEID": str}, skiprows=skip)
 
     # Major australian floods
     fm = fsrc / "floods" / "major_floods.csv"
@@ -316,12 +317,22 @@ def main():
             facts[title]["2022_between_95_99"] = between_95_99
             facts[title]["2022_outside_of_99"] = outside_of_99
 
-    fp = fimg / f"FIGB_scatterplots.{imgext}"
+    fp = fimg / f"FIGB_scatterplots_v{version}.{imgext}"
     fig.savefig(fp, dpi=fdpi)
 
-    ff = fp.parent / f"{fp.stem}_facts.json"
+    ff = fp.parent / f"{fp.stem}_facts_v{version}.json"
     with ff.open("w") as fo:
         json.dump(facts, fo, indent=4)
 
+
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        description="Scatter plot of site events characteristics.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument("-v", "--version", help="Version number",
+                        type=str, default="png")
+    args = parser.parse_args()
+    version = args.version
+
+    main(version)
