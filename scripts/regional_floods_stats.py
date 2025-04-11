@@ -83,15 +83,15 @@ def main(version, clear=False):
     fn = f"flood_data_censored_v{version}.zip" if censored \
         else f"flood_data_v{version}.zip"
     fe = fsrc / "floods" / fn
-    skip = 9 if version == 1 else 35
     eventdata = pd.read_csv(fe, dtype={"SITEID": str},
-                            parse_dates=["FLOW_TIME_OF_PEAK"], skiprows=skip)
+                            parse_dates=["FLOW_TIME_OF_PEAK"],
+                            comment="#")
 
     # Major australian floods
     fm = fsrc / "floods" / "major_floods.csv"
     major_floods = pd.read_csv(fm, index_col="FLOODID",
                                parse_dates=["START_DATE", "END_DATE"],
-                               skiprows=9)
+                               comment="#")
     idx = major_floods.MORE_THAN_5_SITES_AVAILABLE==1
     major_floods = major_floods.loc[idx]
 

@@ -99,6 +99,8 @@ def main(version, censored, marginal, hide_points, clear=False):
 
     cn_surprise = "Q100-SURPRISE"
 
+    nsite_event_min = 5
+
     axwidth = 18
     axheight = 7
     fdpi = 300
@@ -139,16 +141,16 @@ def main(version, censored, marginal, hide_points, clear=False):
     fn = f"flood_data_censored_v{version}.zip" if censored \
         else f"flood_data_v{version}.zip"
     fe = fsrc / "floods" / fn
-    skip = 9 if version == 1 else 35
-    eventdata = pd.read_csv(fe, dtype={"SITEID": str}, skiprows=skip)
+    eventdata = pd.read_csv(fe, dtype={"SITEID": str},
+                            comment="#")
 
     # Major australian floods
     fm = fsrc / "floods" / "major_floods.csv"
     major_floods = pd.read_csv(fm, index_col="FLOODID",
                                parse_dates=["START_DATE", "END_DATE"],
-                               skiprows=9)
-    idx = major_floods.MORE_THAN_5_SITES_AVAILABLE==1
-    major_floods = major_floods.loc[idx]
+                               comment="#")
+    #idx = major_floods.MORE_THAN_5_SITES_AVAILABLE==1
+    #major_floods = major_floods.loc[idx]
 
     #------------------------------------------------------------
     # Plot
@@ -163,22 +165,34 @@ def main(version, censored, marginal, hide_points, clear=False):
     idx &= eventdata.MAJOR_FLOOD.notnull()
     edata = edata.loc[idx, :]
 
+    counts = {}
     for cn in ["SITEID", "MAJOR_FLOOD"]:
-        counts = edata.groupby(cn).apply(lambda x: x.notnull().sum())
-        counts.loc[:, "diff"] = counts.iloc[:, 0]-counts.iloc[:, 1]
-        if cn == "MAJOR_FLOOD":
-            idx = counts.index[counts.index.isin(major_floods.index)]
-            st = major_floods.START_DATE[idx].astype(np.int64)
-            en = major_floods.START_DATE[idx].astype(np.int64)
-            dt = pd.to_datetime((st+en)/2)
-            counts.loc[:, "DATE"] = pd.NaT
-            counts.loc[idx, "DATE"] = dt.values
-            counts = counts.sort_values("DATE")
-        else:
-            counts = counts.sort_values("diff", ascending=False)
+        cnts = edata.groupby(cn).apply(lambda x: x.notnull().sum())
+        cnts = cnts.drop(["MAJOR_FLOOD", "WATERYEAR", "STATE"], axis=1)
+        n = cnts.filter(regex="FLOW|RUNOFF", axis=1).min(axis=1)
+        cnts.loc[:, "MIN_COUNT"] = n
 
-        fc = fimg / f"{fe.stem}_C{censored}_counts_{cn}_v{version}.csv"
-        counts.to_csv(fc)
+        if cn == "MAJOR_FLOOD":
+            idx = cnts.index[cnts.index.isin(major_floods.index)]
+            st = major_floods.START_DATE[idx].astype(np.int64)
+            en = major_floods.END_DATE[idx].astype(np.int64)
+            dt = pd.to_datetime((st + en) / 2)
+            cnts.loc[:, "DATE"] = pd.NaT
+            cnts.loc[idx, "DATE"] = dt.values
+            cnts = cnts.sort_values("DATE")
+
+        fbase = "flood_data_censored" if censored else "flood_data"
+        fc = fimg / f"{fbase}_site_event_count_by_{cn}_v{version}.csv"
+        cnts.to_csv(fc)
+        counts[cn] = cnts
+
+    # Identify flood events with enough data
+    cnts = counts["MAJOR_FLOOD"]
+    enough = cnts.MIN_COUNT >= nsite_event_min
+    major_floods_enough_data = cnts.index[enough]
+
+    isin = major_floods.index.isin(major_floods_enough_data)
+    major_floods = major_floods.loc[isin]
 
     # Fig dimensions
     mosaic = [[vn] for vn in varnames]
@@ -217,6 +231,9 @@ def main(version, censored, marginal, hide_points, clear=False):
         highlighted = means[means.index!=fname_22].nlargest(4).index.tolist()
         highlighted += [fname_22]
         highlighted_any.update(set(highlighted))
+
+        n = len(means)
+        print(" "*4 + f"[{varname}] Plot of {n} regional floods with enough data\n")
 
         # Boxplot
         xtk = np.arange(mfdata.shape[1])
@@ -326,8 +343,8 @@ def main(version, censored, marginal, hide_points, clear=False):
     if varname == varnames[-1]:
         ax.set_xlabel("Regional flood event", fontsize=20)
 
-    fn = f"surprise_{marginal}_C{int(censored)}"\
-         + f"_H{int(hide_points)}_v{version}.png"
+    fn = f"surprise_{marginal}_censored{int(censored)}"\
+         + f"_hidepts{int(hide_points)}_v{version}.png"
     fp = fimg / fn
     fig.savefig(fp, dpi=fdpi)
 

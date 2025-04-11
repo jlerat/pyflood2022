@@ -58,17 +58,19 @@ def main(version):
     #----------------------------------------------------------------------
     fs = fsrc / "sites_info.csv"
     sites = pd.read_csv(fs, dtype={"STATIONID": str},
-                        index_col="STATIONID", skiprows=9)
+                        index_col="STATIONID",
+                        comment="#")
 
     fe = fsrc / "floods" / f"flood_data_v{version}.zip"
-    skip = 9 if version == 1 else 35
-    eventdata = pd.read_csv(fe, dtype={"SITEID": str}, skiprows=skip)
+    eventdata = pd.read_csv(fe, dtype={"SITEID": str},
+                            comment="#")
 
     siteids = eventdata.SITEID.unique()
     coords = sites.loc[siteids, ["LONGITUDE[deg]", "LATITUDE[deg]"]]
 
     fm = froot / "data" / "floods" / f"major_floods.csv"
-    mfloods = pd.read_csv(fm, index_col="FLOODID", skiprows=9)
+    mfloods = pd.read_csv(fm, index_col="FLOODID",
+                          comment="#")
 
     pat = "|".join(selected_floods)
     iselected = mfloods.index.str.contains(pat)

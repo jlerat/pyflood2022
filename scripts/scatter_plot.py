@@ -102,14 +102,14 @@ def main(version):
 
     # Flood event data
     fe = fsrc / "floods" / f"flood_data_v{version}.zip"
-    skip = 9 if version == 1 else 35
-    eventdata = pd.read_csv(fe, dtype={"SITEID": str}, skiprows=skip)
+    eventdata = pd.read_csv(fe, dtype={"SITEID": str},
+                            comment="#")
 
     # Major australian floods
     fm = fsrc / "floods" / "major_floods.csv"
     major_floods = pd.read_csv(fm, index_col="FLOODID",
                                parse_dates=["START_DATE", "END_DATE"],
-                               skiprows=9)
+                               comment="#")
     major_floods = major_floods.sort_values("START_DATE")
 
     # .. set major floods plot specs
