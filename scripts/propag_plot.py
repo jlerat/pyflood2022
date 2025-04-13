@@ -28,7 +28,7 @@ import matplotlib.ticker as ticker
 
 from map_plot import get_shortname
 
-def main():
+def main(version):
     #----------------------------------------------------------------------
     # @Config
     #----------------------------------------------------------------------
@@ -75,7 +75,7 @@ def main():
     # @Get data
     #----------------------------------------------------------------------
     fs = fdata / "sites_info.csv"
-    sites_info = pd.read_csv(fs, index_col="STATIONID", skiprows=9)
+    sites_info = pd.read_csv(fs, index_col="STATIONID", comment="#")
 
     fs = fdata / "propag_data_sites_info.json"
     with fs.open("r") as fo:
@@ -86,7 +86,7 @@ def main():
     cdates = ["PEAK_DOWN_TIME", "PEAK_UP_TIME"]
     propag = pd.read_csv(fp, parse_dates=cdates,
                          dtype={"UPID": str, "DOWNID": str},
-                         skiprows=9)
+                         comment="#")
     pairs = propag.PAIR.unique()
 
     #----------------------------------------------------------------------
@@ -216,4 +216,12 @@ def main():
         fig.savefig(fp, dpi=fdpi)
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+            description="Propagation figure",
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("-v", "--version", help="Version number",
+                        type=str, default="png")
+    args = parser.parse_args()
+    version = args.version
+
+    main(version)

@@ -257,7 +257,7 @@ def main(version):
             # Resources Research 40, no. 1 (2004). https://doi.org/10.1029/2003WR002247.
             # Adapted from Table 1
             yy = 74*xx**(0.53-1)
-            eq = r"$74\ A^{-0.47}$"
+            eq = r"$74.0\ A^{-0.47}$"
             ax.plot(xx, yy, "--", color="tab:purple", label=f"99% US ({eq})", lw=3)
             ax.set_xlim((x0, x1))
 

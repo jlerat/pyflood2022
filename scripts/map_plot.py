@@ -109,7 +109,7 @@ def plot_cities(ax, cities, text_kwargs={}):
     ax.set_ylim(ylim)
 
 
-def main():
+def main(version):
     #----------------------------------------------------------------------
     # @Configuration
     #----------------------------------------------------------------------
@@ -209,7 +209,7 @@ def main():
     fs = fsrc / "streamflow_data_sites_info.csv"
     sites = pd.read_csv(fs, index_col="STATIONID",
                         dtype={"STATIONID":str},
-                        skiprows=9)
+                        comment="#")
     flows_waterlevels = {}
     for aname in [n for l in mosaic for n in l]:
         if aname.startswith("grid"):
@@ -256,9 +256,10 @@ def main():
                                         awllons, awllats)
 
     # --- flood data ---
-    fe = fsrc / "floods" / "flood_data_censored.zip"
+    fe = fsrc / "floods" / f"flood_data_censored_v{version}.zip"
     eventdata = pd.read_csv(fe, dtype={"siteid": str},
-                            parse_dates=["FLOW_TIME_OF_PEAK"], skiprows=9)
+                            parse_dates=["FLOW_TIME_OF_PEAK"],
+                            comment="#")
 
     #----------------------------------------------------------------------
     # @Process
@@ -302,7 +303,7 @@ def main():
                     idx = eventdata.SITEID == siteid
                     idx &= eventdata.MAJOR_FLOOD == "NorthernRivers-Feb22"
                     finfo = eventdata.loc[idx].squeeze()
-                    q100 = finfo.loc["FLOW_PEAK_C02_GEV-Q100-ALL[perc]"]
+                    q100 = finfo.loc["FLOW_PEAK_GEV-Q100-ALL[m3/sec]"]
 
                     # Maximum flow rise in 12h
                     rise = {}
@@ -510,4 +511,12 @@ def main():
             json.dump(flood_info, fo, indent=4)
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+            description="Map figure figure",
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("-v", "--version", help="Version number",
+                        type=str, default="png")
+    args = parser.parse_args()
+    version = args.version
+
+    main(version)

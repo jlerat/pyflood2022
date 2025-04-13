@@ -135,7 +135,7 @@ def main(version, censored, marginal, hide_points, clear=False):
     #------------------------------------------------------------
     # Site info
     fs = fsrc / "sites_info.csv"
-    sites = pd.read_csv(fs, index_col="STATIONID", skiprows=9)
+    sites = pd.read_csv(fs, index_col="STATIONID", comment="#")
 
     # Flood event data
     fn = f"flood_data_censored_v{version}.zip" if censored \
