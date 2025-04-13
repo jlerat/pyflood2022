@@ -1,11 +1,15 @@
-#
-# --- THIS DATASET HAS BEEN PREPARED IN THE CONTEXT OF A RESEARCH PROJECT. DATA SHOULD NOT BE USED TO SUPPORT THE DESIGN OF FLOOD MITIGATION INFRASTRUCTURE. ---
+#--------------------------------------------------------------------------------
+# DISCLAIMER: DATA CONTAINED IN THIS FILE HAS BEEN PREPARED IN THE CONTEXT OF A RESEARCH PROJECT. IT MAY NOT BE ACCURATE AND IS SUBJECT TO CHANGE.
+# USE THIS DATA AT YOUR OWN RISK.
+#--------------------------------------------------------------------------------
 # Author : Julien Lerat, CSIRO Environment
 # Reference : Lerat and Vaze (2025), When the impossible flood happens: how February 2022 redefines extreme floods in Australia. Communications Earth and Environment
 # Version : 5
-# Date : 2025-04-13 11:52:33.841549
+# Date : 2025-04-13 16:46:08.517509
 # Source file : DATA_prepare_flood_data.py
+#--------------------------------------------------------------------------------
 # Description : Information on gauging stations
+#--------------------------------------------------------------------------------
 #
 STATIONID,LONGITUDE[deg],LATITUDE[deg],CATCHMENTAREA[km2],STATE,NAME
 002101,139.3671,-25.90837,115205.0,QLD,Diamantina River At Birdsville

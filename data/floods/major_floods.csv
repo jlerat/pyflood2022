@@ -1,10 +1,14 @@
-#
-# --- THIS DATASET HAS BEEN PREPARED IN THE CONTEXT OF A RESEARCH PROJECT. DATA SHOULD NOT BE USED TO SUPPORT THE DESIGN OF FLOOD MITIGATION INFRASTRUCTURE. ---
+#--------------------------------------------------------------------------------
+# DISCLAIMER: DATA CONTAINED IN THIS FILE HAS BEEN PREPARED IN THE CONTEXT OF A RESEARCH PROJECT. IT MAY NOT BE ACCURATE AND IS SUBJECT TO CHANGE.
+# USE THIS DATA AT YOUR OWN RISK.
+#--------------------------------------------------------------------------------
 # Author : Julien Lerat, CSIRO Environment
 # Reference : Lerat and Vaze (2025), When the impossible flood happens: how February 2022 redefines extreme floods in Australia. Communications Earth and Environment
 # Version : 5
-# Date : 2025-04-13 11:52:33.846679
+# Date : 2025-04-13 16:46:08.540123
 # Source file : DATA_prepare_flood_data.py
+#--------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------
 #
 FLOODID,EVENT,ZONE,REGION,CATEGORY,START_DATE,END_DATE,FATALITIES,INJURED,INSURED_COST,URL,DESCRIPTION,SOURCES,LONGITUDE_MIN,LONGITUDE_MAX,LATITUDE_MIN,LATITUDE_MAX,INSURANCECOUNCILAUSTRALIA_CATID,INSURANCECOUNCILAUSTRALIA_DESCRIPTION,INSURANCECOUNCILAUSTRALIA_NORMLOSSVALUE,INSURANCECOUNCILAUSTRALIA_TOTALCLAIMS,STATES,SHORTNAME,MORE_THAN_5_SITES_AVAILABLE
 CycTc119-Jan50,Cyclone - TC119 Coastal Queensland and New South Wales,"New South Wales, Queensland","Brisbane, Cairns, Sydney",Cyclone,1950-01-16,1950-01-19,17.0,0.0,0.0,https://knowledge.aidr.org.au/resources/cyclone-coastal-queensland-and-new-south-wales/ https://knowledge.aidr.org.au/resources/flood-sydney-north-coast-and-north-western-districts-1950/,"Blended event: [https://knowledge.aidr.org.au/resources/cyclone-coastal-queensland-and-new-south-wales/] From 16-19 January 1950, a Category 1 cyclone known as TC119 moved south from the Queensland gulf to Sydney, causing widespread damage..Seven people died in New South Wales. [https://knowledge.aidr.org.au/resources/flood-sydney-north-coast-and-north-western-districts-1950/] Wide spread flooding occurred in New South Wales a result of a cyclone that moved south from Queensland..Exceptionally heavy rain fell in the north coast and north-western districts. At Murwillumbah on the Tweed River six inches of rain fell in 24 hours, with two inches recorded in the city. Heavy seas caused high tides along the New South Wales coast..The resulting damage included; the closure of the Mascot airport, road closures, 8000 homes damaged, 1000 head of cattle dead, and 10 casualties.","Blended event: [https://knowledge.aidr.org.au/resources/cyclone-coastal-queensland-and-new-south-wales/] Australia through time, 2nd edn. Castle Hill, New South Wales: Lifetime Distributors, 1994, p 342.
