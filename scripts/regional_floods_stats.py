@@ -33,7 +33,7 @@ import matplotlib.pyplot as plt
 from surprise_plot import format_spines
 
 
-def main(clear=False):
+def main(version, clear=False):
     #----------------------------------------------------------------------
     # Config
     #----------------------------------------------------------------------
@@ -77,19 +77,21 @@ def main(clear=False):
     #------------------------------------------------------------
     # Site info
     fs = fsrc / "sites_info.csv"
-    sites = pd.read_csv(fs, index_col="STATIONID", skiprows=9)
+    sites = pd.read_csv(fs, index_col="STATIONID", comment="#")
 
     # Flood event data
-    fe = fsrc / "floods" / "flood_data_censored.zip" if censored \
-        else fsrc / "floods" / "flood_data.zip"
-    eventdata = pd.read_csv(fe, dtype={"siteid": str},
-                            parse_dates=["FLOW_TIME_OF_PEAK"], skiprows=9)
+    fn = f"flood_data_censored_v{version}.zip" if censored \
+        else f"flood_data_v{version}.zip"
+    fe = fsrc / "floods" / fn
+    eventdata = pd.read_csv(fe, dtype={"SITEID": str},
+                            parse_dates=["FLOW_TIME_OF_PEAK"],
+                            comment="#")
 
     # Major australian floods
     fm = fsrc / "floods" / "major_floods.csv"
     major_floods = pd.read_csv(fm, index_col="FLOODID",
                                parse_dates=["START_DATE", "END_DATE"],
-                               skiprows=9)
+                               comment="#")
     idx = major_floods.MORE_THAN_5_SITES_AVAILABLE==1
     major_floods = major_floods.loc[idx]
 
@@ -147,7 +149,7 @@ def main(clear=False):
                     .sort_index()
                 data.index = [f"{i.left}\nto {i.right}" for i in data.index]
 
-                title_txt = "How many site events are selected\nfor one regional event?"
+                title_txt = "How many site events are selected\nper regional event?"
 
             data.plot(ax=ax, kind="bar", rot=0)
         else:
@@ -220,9 +222,18 @@ def main(clear=False):
 
         ax.set_xlabel(xlabel, fontsize=axlabel_fontsize)
 
-    fp = fimg / "flood_stats.png"
+    fp = fimg / f"flood_stats_v{version}.png"
     fig.savefig(fp, dpi=fdpi)
 
 
 if __name__ == "__main__":
-    main(True)
+    parser = argparse.ArgumentParser(
+        description="Map of recent regional events",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument("-v", "--version", help="Version number",
+                        type=str, default="png")
+    args = parser.parse_args()
+    version = args.version
+
+    main(version, True)

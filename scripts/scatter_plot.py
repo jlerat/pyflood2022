@@ -58,7 +58,7 @@ def kde(x, y, extent, ngrid=100, levels=[0.9, 0.95, 0.99]):
     return X, Y, Z, pdf_threshs, kernel
 
 
-def main():
+def main(version):
     #----------------------------------------------------------------------
     # Config
     #----------------------------------------------------------------------
@@ -101,14 +101,15 @@ def main():
     #------------------------------------------------------------
 
     # Flood event data
-    fe = fsrc / "floods" / "flood_data.zip"
-    eventdata = pd.read_csv(fe, dtype={"SITEID": str}, skiprows=9)
+    fe = fsrc / "floods" / f"flood_data_v{version}.zip"
+    eventdata = pd.read_csv(fe, dtype={"SITEID": str},
+                            comment="#")
 
     # Major australian floods
     fm = fsrc / "floods" / "major_floods.csv"
     major_floods = pd.read_csv(fm, index_col="FLOODID",
                                parse_dates=["START_DATE", "END_DATE"],
-                               skiprows=9)
+                               comment="#")
     major_floods = major_floods.sort_values("START_DATE")
 
     # .. set major floods plot specs
@@ -158,10 +159,13 @@ def main():
         nvalid = y.notnull().sum()
 
         # plot
+        nev = len(x)
+        ns = df.SITEID.unique().shape[0]
+        label = f"Site event"
         alpha = 0.1
         ax.plot(x, y, "o", alpha=alpha, mec="none", mfc="0.6", ms=3)
         ax.plot([], [], "o", mec="k", mfc="0.8", ms=5,
-                label="Site event")
+                label=label)
 
         # Plot historical floods
         # Define 2022 event
@@ -177,7 +181,7 @@ def main():
 
             # Plot NR 2022
             n = len(xf)
-            lab = f"{re.sub('.*-', '', mfid)} regional event ({n} site events)"
+            lab = f"{re.sub('.*-', '', mfid)} regional event"
             ax.plot(xf, yf, mfinfo.marker, color=mfinfo.color,
                     mec="0.3", label=lab)
 
@@ -227,7 +231,7 @@ def main():
             if ax.get_xscale()=="log":
                 uu = np.logspace(math.log10(1-3+x0), math.log10(x1), 500)
                 vv = a+b*np.log(uu)
-                eq = f"${a:0.1f}\\times A^{{{b:0.2f}}}$"
+                eq = f"${a:0.1f}\\ A^{{{b:0.2f}}}$"
             else:
                 uu = np.linspace(x0, x1, 500)
                 vv = a+b*uu
@@ -253,7 +257,7 @@ def main():
             # Resources Research 40, no. 1 (2004). https://doi.org/10.1029/2003WR002247.
             # Adapted from Table 1
             yy = 74*xx**(0.53-1)
-            eq = r"$74\times A^{-0.47}$"
+            eq = r"$74.0\ A^{-0.47}$"
             ax.plot(xx, yy, "--", color="tab:purple", label=f"99% US ({eq})", lw=3)
             ax.set_xlim((x0, x1))
 
@@ -316,12 +320,22 @@ def main():
             facts[title]["2022_between_95_99"] = between_95_99
             facts[title]["2022_outside_of_99"] = outside_of_99
 
-    fp = fimg / f"FIGB_scatterplots.{imgext}"
+    fp = fimg / f"FIGB_scatterplots_v{version}.{imgext}"
     fig.savefig(fp, dpi=fdpi)
 
-    ff = fp.parent / f"{fp.stem}_facts.json"
+    ff = fp.parent / f"{fp.stem}_facts_v{version}.json"
     with ff.open("w") as fo:
         json.dump(facts, fo, indent=4)
 
+
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        description="Scatter plot of site events characteristics.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument("-v", "--version", help="Version number",
+                        type=str, default="png")
+    args = parser.parse_args()
+    version = args.version
+
+    main(version)

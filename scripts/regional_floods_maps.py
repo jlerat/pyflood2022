@@ -21,7 +21,7 @@ from matplotlib import ticker
 
 from map_plot import plot_shape
 
-def main():
+def main(version):
     #----------------------------------------------------------------------
     # @Config
     #----------------------------------------------------------------------
@@ -58,16 +58,19 @@ def main():
     #----------------------------------------------------------------------
     fs = fsrc / "sites_info.csv"
     sites = pd.read_csv(fs, dtype={"STATIONID": str},
-                        index_col="STATIONID", skiprows=9)
+                        index_col="STATIONID",
+                        comment="#")
 
-    fe = fsrc / "floods" / "flood_data.zip"
-    eventdata = pd.read_csv(fe, dtype={"SITEID": str}, skiprows=9)
+    fe = fsrc / "floods" / f"flood_data_v{version}.zip"
+    eventdata = pd.read_csv(fe, dtype={"SITEID": str},
+                            comment="#")
 
     siteids = eventdata.SITEID.unique()
     coords = sites.loc[siteids, ["LONGITUDE[deg]", "LATITUDE[deg]"]]
 
-    fm = froot / "data" / "floods" / "major_floods.csv"
-    mfloods = pd.read_csv(fm, index_col="FLOODID", skiprows=9)
+    fm = froot / "data" / "floods" / f"major_floods.csv"
+    mfloods = pd.read_csv(fm, index_col="FLOODID",
+                          comment="#")
 
     pat = "|".join(selected_floods)
     iselected = mfloods.index.str.contains(pat)
@@ -175,8 +178,17 @@ def main():
                 leg.get_title().set_fontsize(14)
                 axleg.axis("off")
 
-    fp = fimg / "regional_floods_plot.png"
+    fp = fimg / f"regional_floods_plot_v{version}.png"
     fig.savefig(fp, dpi=fdpi)
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        description="Map of recent regional events",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument("-v", "--version", help="Version number",
+                        type=str, default="png")
+    args = parser.parse_args()
+    version = args.version
+
+    main(version)
