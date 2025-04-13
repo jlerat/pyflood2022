@@ -37,7 +37,7 @@ jobs:
           cd $GITHUB_WORKSPACE
           for file in scripts/*.py; do
              echo Running $file
-             python $file
+             python $file -v 5
           done  
         
       - name: Upload images
