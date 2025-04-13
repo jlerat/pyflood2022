@@ -93,7 +93,7 @@ def main(version, censored, marginal, hide_points, clear=False):
     print(f"Marginal = {marginal}")
     print(f"Hide points = {hide_points}\n")
 
-    varnames = ["LOW_PEAK",
+    varnames = ["FLOW_PEAK",
                 "RUNOFF_240H"
                 ]
 
@@ -302,14 +302,12 @@ def main(version, censored, marginal, hide_points, clear=False):
         elif vartxt.startswith("runoff_"):
             n = int(re.search("[0-9]+", varname).group())/24
             vn = f"Runoff total - {n:0.0f} days"
-        elif vartxt.startswith("specificflow_peak"):
+        elif vartxt.startswith("flow_peak"):
             vn = "Specific instantaneous peak flow"
 
         ylabel = "1% AEP Surprise index [-]"
         ax.set_ylabel(ylabel, fontsize=ylabel_fontsize)
-
-        title_txt = varname.lower()
-        title = f" ({letters[iax]}) {title_txt}"
+        title = f" ({letters[iax]}) {vn}"
         ax.set_title(title, **title_args)
 
     # Set font of x label
@@ -341,7 +339,8 @@ def main(version, censored, marginal, hide_points, clear=False):
         fig.add_artist(con)
 
     if varname == varnames[-1]:
-        ax.set_xlabel("Regional flood event", fontsize=20)
+        xlab = f"Regional flood event"
+        ax.set_xlabel(xlab, fontsize=20)
 
     fn = f"surprise_{marginal}_censored{int(censored)}"\
          + f"_hidepts{int(hide_points)}_v{version}.png"

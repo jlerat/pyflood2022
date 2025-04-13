@@ -149,7 +149,7 @@ def main(version, clear=False):
                     .sort_index()
                 data.index = [f"{i.left}\nto {i.right}" for i in data.index]
 
-                title_txt = "How many site events are selected\nfor one regional event?"
+                title_txt = "How many site events are selected\nper regional event?"
 
             data.plot(ax=ax, kind="bar", rot=0)
         else:
