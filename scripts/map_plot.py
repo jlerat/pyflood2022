@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-## -- Script Meta Data --
-## Author  : ler015
-## Created : 2024-03-15 14:14:02.600596
-## Comment : Figure showing rainfall map
-##
-## ------------------------------
+# -- Script Meta Data --
+# Author  : ler015
+# Created : 2024-03-15 14:14:02.600596
+# Comment : Figure showing rainfall map
+#
+# ------------------------------
 
 
 import sys, os, re, json, math
@@ -102,17 +102,17 @@ def plot_cities(ax, cities, text_kwargs={}):
     xlim, ylim = ax.get_xlim(), ax.get_ylim()
     for icity, (city, xy) in enumerate(cities.items()):
         lab = "Capital city" if icity == 0 else ""
-        lines = ax.plot(*xy, label=lab, **plot_kwargs)
-        txt = ax.annotate(city, xy, **text_kwargs)
+        ax.plot(*xy, label=lab, **plot_kwargs)
+        ax.annotate(city, xy, **text_kwargs)
 
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
 
 
 def main(version):
-    #----------------------------------------------------------------------
-    # @Configuration
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
+    #  @Configuration
+    # ----------------------------------------------------------------------
     # Image extension
     imgext = "png"
 
@@ -124,9 +124,6 @@ def main(version):
     durations = [120] #[24, 72, 120]
 
     # time slice
-    start = pd.to_datetime("2022-02-20 07:00")
-    end = pd.to_datetime("2022-03-10 08:00")
-
     time_awra = pd.to_datetime("2022-02-23")
 
     # time slice to plot
@@ -166,9 +163,9 @@ def main(version):
     cities_top_kwargs = cities_below_kwargs.copy()
     cities_top_kwargs["xytext"] = (-5, 60)
 
-    #----------------------------------------------------------------------
-    # @Folders
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
+    #  @Folders
+    # ----------------------------------------------------------------------
     source_file = Path(__file__).resolve()
     froot = source_file.parent.parent
 
@@ -186,9 +183,9 @@ def main(version):
     fshp_border = fsrc / "gis" / "NSW_QLD_border.shp"
     fshp_catch = fsrc / "gis" / "catchment_boundaries.shp"
 
-    #----------------------------------------------------------------------
-    # @Get data
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
+    #  @Get data
+    # ----------------------------------------------------------------------
     # Towns
     towns = pd.read_csv(fsrc / "gis" / "main_towns.csv", skiprows=8)
     idx = (towns.xcoord>=x0)&(towns.xcoord<=x1)\
@@ -197,18 +194,18 @@ def main(version):
           & (towns.NAME!="Nambour")
     towns = towns.loc[idx]
 
-    towns = {re.sub(" (\(|-).*", "", t.NAME): (t.xcoord, t.ycoord)
+    towns = {re.sub(" (\\(|-).*", "", t.NAME): (t.xcoord, t.ycoord)
              for _, t in towns.iterrows()}
 
-    towns_top = {tn:to for tn, to in towns.items()
+    towns_top = {tn: to for tn, to in towns.items()
                  if re.search("Ball", tn)}
-    towns_below = {tn:to for tn, to in towns.items()
+    towns_below = {tn: to for tn, to in towns.items()
                    if not re.search("Bong|Yarr|Byr|Ball", tn)}
 
     # Streamflow
     fs = fsrc / "streamflow_data_sites_info.csv"
     sites = pd.read_csv(fs, index_col="STATIONID",
-                        dtype={"STATIONID":str},
+                        dtype={"STATIONID": str},
                         comment="#")
     flows_waterlevels = {}
     for aname in [n for l in mosaic for n in l]:
@@ -242,7 +239,6 @@ def main(version):
     # -- AWAP --
     fnc = fsrc / "floods" / "awap_data.nc"
     with Dataset(fnc, "r") as nc:
-        awgrid = nc["awap_daily_northern_rivers"][:].filled()
         awllons = nc["longitude"][:].filled()
         awllats = nc["latitude"][:].filled()
 
@@ -275,8 +271,7 @@ def main(version):
         ncols, nrows = len(mosaic[0]), len(mosaic)
         fig = plt.figure(figsize=(ncols*awidth, nrows*aheight),
                          layout="constrained")
-        kw = None #dict(height_ratios=[1, 3, 1, 3])
-        axs = fig.subplot_mosaic(mosaic, gridspec_kw=kw)
+        axs = fig.subplot_mosaic(mosaic)
         anames = ["grid_sm", "grid_rain"]
         anames += [n for n in list(axs.keys()) if not n.startswith("grid")]
 
@@ -286,7 +281,7 @@ def main(version):
             ax = axs[aname]
             if aname.startswith("tsq"):
                 siteid = re.sub("ts._", "", aname)
-                if not siteid in flows_waterlevels:
+                if siteid not in flows_waterlevels:
                     continue
 
                 # Flow
@@ -295,9 +290,7 @@ def main(version):
                 se.plot(ax=ax, lw=2)
 
                 sinfo = sites.loc[siteid]
-                qmax = se.max()
                 area = sinfo["CATCHMENTAREA[km2]"]
-                qsmax = qmax/area
 
                 if siteid != "203402":
                     idx = eventdata.SITEID == siteid
@@ -309,7 +302,7 @@ def main(version):
                     rise = {}
                     for delta in [1, 3, 6, 12]:
                         diff = se - se.shift(freq=f"{delta}h")
-                        rise[f"max_{delta}h_rise[m3.s-1]"] =  diff.max()
+                        rise[f"max_{delta}h_rise[m3.s-1]"] = diff.max()
                         rise[f"max_{delta}h_rise_time"] = str(diff.idxmax())
 
                     flood_info[siteid] = rise
@@ -369,7 +362,7 @@ def main(version):
                 continue
 
             # Plot config
-            if aname=="grid_rain":
+            if aname == "grid_rain":
                 maxval, llons, llats = maxdata
                 toplot = maxval
 
@@ -383,7 +376,7 @@ def main(version):
                 bounds = np.unique(np.round(bounds/base)*base)
                 cmap = cmap_rain
             else:
-                toplot = argrid[artimes==time_awra, :, :].squeeze()
+                toplot = argrid[artimes == time_awra, :, :].squeeze()
 
                 # .. smooth taking into account coast
                 isnan = np.isnan(toplot)
@@ -397,10 +390,10 @@ def main(version):
                 vmax = 1
 
                 bmin = 0.5
-                bounds = [0.]+[bmin+0.1*k for k in range(100) if bmin+0.1*k<=1]
+                bounds = [0.] + [bmin + 0.1 * k for k in range(100)
+                                 if bmin + 0.1 * k <= 1]
                 llons, llats = arllons, arllats
                 cmap = cmap_sm
-
 
             norm = BoundaryNorm(bounds, 256)
             levels = np.linspace(vmin, bounds[-1], 200)
@@ -417,7 +410,6 @@ def main(version):
 
             if aname == "grid_sm":
                 for rn in ["Wilsons", "Richmond", "Mary"]:
-                    fn = f"RIVERS|{rn}"
                     backc = col_rivers[rn]
                     plot_shape(ax, fshp_rivers, name_filter=rn, lw=6, color=backc)
                     plot_shape(ax, fshp_rivers, name_filter=rn, lw=1.5, color="k")
@@ -449,7 +441,7 @@ def main(version):
             colb.ax.set_ylim([bounds[0], bounds[-1]])
 
             if aname == "grid_rain":
-                title = f"Rainfall\n[mm]\n"
+                title = "Rainfall\n[mm]\n"
             else:
                 if awra_varname == "rzsm_pfull":
                     title = "Root\nZone\nSoil\nMoist.\n[%sat]\n"
@@ -509,6 +501,7 @@ def main(version):
         fi = fp.parent / f"{fp.stem}.json"
         with fi.open("w") as fo:
             json.dump(flood_info, fo, indent=4)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
