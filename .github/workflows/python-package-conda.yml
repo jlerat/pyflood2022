@@ -9,6 +9,8 @@ jobs:
     strategy:
       max-parallel: 5
     
+    continue-on-error: false
+
     defaults:
       run:
         shell: bash -l {0}
@@ -37,7 +39,7 @@ jobs:
           cd $GITHUB_WORKSPACE
           for file in scripts/*.py; do
              echo Running $file
-             python $file -v 5
+             python $file -v 6
           done  
         
       - name: Upload images
