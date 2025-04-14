@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-## -- Script Meta Data --
-## Author  : ler015
-## Created : 2024-02-19 10:54:28.122946
-## Comment : Compare list of major floods with collected flood events
-##
-## ------------------------------
+# -- Script Meta Data --
+# Author  : ler015
+# Created : 2024-02-19 10:54:28.122946
+# Comment : Compare list of major floods with collected flood events
+#
+# ------------------------------
 
 
 import sys, os, re, json, math

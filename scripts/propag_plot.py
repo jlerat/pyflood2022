@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-## -- Script Meta Data --
-## Author  : ler015
-## Created : 2024-03-24 Sun 03:43 PM
-## Comment : Plot proag stats
-##
-## ------------------------------
+# -- Script Meta Data --
+# Author  : ler015
+# Created : 2024-03-24 Sun 03:43 PM
+# Comment : Plot proag stats
+#
+# ------------------------------
 
 
 import sys, os, re, json, math

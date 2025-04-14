@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-## -- Script Meta Data --
-## Author  : ler015
-## Created : 2024-03-22 Fri 04:19 PM
-## Comment : Plot flood event summary and surprise
-##
-## ------------------------------
+# -- Script Meta Data --
+# Author  : ler015
+# Created : 2024-03-22 Fri 04:19 PM
+# Comment : Plot flood event summary and surprise
+#
+# ------------------------------
 
-
-import sys, os, re, json, math
+import re
 import argparse
 from pathlib import Path
 
@@ -29,9 +28,7 @@ mpl.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from matplotlib.patches import ConnectionPatch
-import matplotlib.transforms as mtransforms
 import matplotlib.patheffects as pe
-from matplotlib import ticker
 
 def plot_line(ax, slope, x0, y0, *args, **kwargs):
     xa, xb = ax.get_xlim()

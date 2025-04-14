@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-## -- Script Meta Data --
-## Author  : ler015
-## Created : 2024-03-22 Fri 03:25 PM
-## Comment : Plot flood stats as scatter plots
-##
-## ------------------------------
+# -- Script Meta Data --
+# Author  : ler015
+# Created : 2024-03-22 Fri 03:25 PM
+# Comment : Plot flood stats as scatter plots
+#
+# ------------------------------
 
 
 import sys, os, re, json, math
