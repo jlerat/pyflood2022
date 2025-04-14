@@ -14,6 +14,7 @@ jobs:
     defaults:
       run:
         shell: bash -l {0}
+
     steps:
       - uses: actions/checkout@v2
       
@@ -39,7 +40,7 @@ jobs:
           cd $GITHUB_WORKSPACE
           for file in scripts/*.py; do
              echo Running $file
-             python $file -v 6
+             python $file -v 5
           done  
         
       - name: Upload images
