@@ -9,9 +9,12 @@ jobs:
     strategy:
       max-parallel: 5
     
+    continue-on-error: false
+
     defaults:
       run:
         shell: bash -l {0}
+
     steps:
       - uses: actions/checkout@v2
       
