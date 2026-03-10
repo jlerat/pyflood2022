@@ -68,7 +68,7 @@ def main(version):
 
     fimg = froot / "images" / "propag"
     fimg.mkdir(exist_ok=True, parents=True)
-    for f in fimg.glob("*.png"):
+    for f in fimg.glob("*.*"):
         f.unlink()
 
     #----------------------------------------------------------------------

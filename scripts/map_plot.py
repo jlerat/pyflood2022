@@ -15,9 +15,6 @@ from pathlib import Path
 from collections import OrderedDict
 from string import ascii_letters as letters
 
-import warnings
-warnings.filterwarnings("ignore")
-
 import numpy as np
 import pandas as pd
 
@@ -35,6 +32,10 @@ from matplotlib.colors import BoundaryNorm
 from matplotlib.patches import ConnectionPatch
 import matplotlib.patheffects as patheff
 from matplotlib import ticker
+
+import warnings
+warnings.filterwarnings("ignore")
+
 
 def get_shortname(name):
     """ Get short station name """
@@ -173,7 +174,7 @@ def main(version):
 
     fimg = froot / "images" / "map"
     fimg.mkdir(exist_ok=True, parents=True)
-    for f in fimg.glob("*.png"):
+    for f in fimg.glob("*.*"):
         f.unlink()
 
     fshp_rivers = fsrc / "gis" / "main_rivers_NSW+QLD_simplified4.shp"
@@ -353,9 +354,9 @@ def main(version):
                 imo = (imo[0][0], imo[1][0])
                 xp = 0.9 if imo[1]==0 else 0.1
                 yp = 0.5
-                con = ConnectionPatch(\
-                            xyA=(xp, yp), coordsA=ax.transAxes, \
-                            xyB=(x, y), coordsB=axmap.transData, \
+                con = ConnectionPatch(
+                            xyA=(xp, yp), coordsA=ax.transAxes,
+                            xyB=(x, y), coordsB=axmap.transData,
                             color="0.4", lw=1, zorder=10)
                 fig.add_artist(con)
 

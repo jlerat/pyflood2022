@@ -93,7 +93,7 @@ def main(version):
 
     fimg = froot / "images" / "scatter"
     fimg.mkdir(exist_ok=True, parents=True)
-    for f in fimg.glob("*.png"):
+    for f in list(fimg.glob("*.png")) + list(fimg.glob("*.json")):
         f.unlink()
 
     #------------------------------------------------------------
