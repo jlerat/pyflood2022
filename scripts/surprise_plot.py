@@ -350,7 +350,7 @@ if __name__ == "__main__":
         description="Surprise index figure",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("-v", "--version", help="Version number",
-                        type=str, default="png")
+                        type=str, default="5")
     parser.add_argument("-hp", "--hide_points", help="Show individual points",
                         action="store_true", default=False)
     args = parser.parse_args()
