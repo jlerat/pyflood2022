@@ -9,8 +9,7 @@ dependencies:
   - pandas=2.2.1
   - pip
   - pyproj=3.5.0
-  - pyshp=2.3.1
+  - pyshp=3.0.3
   - python=3.10.6
-  - pyshp=2.3.1
   - scipy=1.13.0
   - statsmodels=0.14.1
