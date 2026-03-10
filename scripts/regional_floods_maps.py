@@ -50,6 +50,8 @@ def main(version):
 
     fimg = froot / "images" / "regional_floods_maps"
     fimg.mkdir(exist_ok=True, parents=True)
+    for f in fimg.glob("*.*"):
+        f.unlink()
 
     fshp_coast = fsrc / "gis" / "australia.shp"
 
@@ -187,7 +189,7 @@ if __name__ == "__main__":
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument("-v", "--version", help="Version number",
-                        type=str, default="png")
+                        type=str, default="5")
     args = parser.parse_args()
     version = args.version
 

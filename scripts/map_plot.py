@@ -15,9 +15,6 @@ from pathlib import Path
 from collections import OrderedDict
 from string import ascii_letters as letters
 
-import warnings
-warnings.filterwarnings("ignore")
-
 import numpy as np
 import pandas as pd
 
@@ -35,6 +32,10 @@ from matplotlib.colors import BoundaryNorm
 from matplotlib.patches import ConnectionPatch
 import matplotlib.patheffects as patheff
 from matplotlib import ticker
+
+import warnings
+warnings.filterwarnings("ignore")
+
 
 def get_shortname(name):
     """ Get short station name """
@@ -57,7 +58,7 @@ def plot_shape(ax, fshp, *args, **kwargs):
         kwargs.pop("name_filter")
     xlim = ax.get_xlim()
     ylim = ax.get_ylim()
-    with shapefile.Reader(str(fshp), "r") as shp:
+    with shapefile.Reader(str(fshp)) as shp:
         nsh = len(shp.shapes())
         for ish, shrec in enumerate(shp.shapeRecords()):
             dd = shrec.record.as_dict()
@@ -173,7 +174,7 @@ def main(version):
 
     fimg = froot / "images" / "map"
     fimg.mkdir(exist_ok=True, parents=True)
-    for f in fimg.glob("*.png"):
+    for f in fimg.glob("*.*"):
         f.unlink()
 
     fshp_rivers = fsrc / "gis" / "main_rivers_NSW+QLD_simplified4.shp"
@@ -353,9 +354,9 @@ def main(version):
                 imo = (imo[0][0], imo[1][0])
                 xp = 0.9 if imo[1]==0 else 0.1
                 yp = 0.5
-                con = ConnectionPatch(\
-                            xyA=(xp, yp), coordsA=ax.transAxes, \
-                            xyB=(x, y), coordsB=axmap.transData, \
+                con = ConnectionPatch(
+                            xyA=(xp, yp), coordsA=ax.transAxes,
+                            xyB=(x, y), coordsB=axmap.transData,
                             color="0.4", lw=1, zorder=10)
                 fig.add_artist(con)
 
@@ -433,8 +434,13 @@ def main(version):
                               vmin=0., vmax=vmax,
                               levels=levels)
 
-            for c in cnt.collections:
-                c.set_edgecolor("face")
+            # Handle different matplotlib versions
+            if hasattr(cnt, 'collections'):
+                for c in cnt.collections:
+                    c.set_edgecolor("face")
+            else:
+                # For newer matplotlib versions
+                pass
 
             colb = fig.colorbar(cnt, ax=ax, ticks=bounds,
                                 shrink=0.5, aspect=30, anchor=(0., 0.5))
@@ -508,7 +514,7 @@ if __name__ == "__main__":
             description="Map figure figure",
             formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("-v", "--version", help="Version number",
-                        type=str, default="png")
+                        type=str, default="5")
     args = parser.parse_args()
     version = args.version
 

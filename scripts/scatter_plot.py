@@ -93,7 +93,7 @@ def main(version):
 
     fimg = froot / "images" / "scatter"
     fimg.mkdir(exist_ok=True, parents=True)
-    for f in fimg.glob("*.png"):
+    for f in list(fimg.glob("*.png")) + list(fimg.glob("*.json")):
         f.unlink()
 
     #------------------------------------------------------------
@@ -292,11 +292,16 @@ def main(version):
             axi.clabel(CS, CS.levels, fmt=fmt, colors=level_colors)
 
             # .. set legend item
-            for i, collec in enumerate(CS.collections):
-                lab = f"KDE probability mass {100 * levels.index[i]:0.0f}%"
-                col = collec.get_edgecolor()
-                lw = collec.get_linewidth()
-                ax.plot([], [], "-", color=col, lw=lw, label=lab)
+            # Handle different matplotlib versions
+            if hasattr(CS, 'collections'):
+                for i, collec in enumerate(CS.collections):
+                    lab = f"KDE probability mass {100 * levels.index[i]:0.0f}%"
+                    col = collec.get_edgecolor()
+                    lw = collec.get_linewidth()
+                    ax.plot([], [], "-", color=col, lw=lw, label=lab)
+            else:
+                # For newer matplotlib versions - skip legend for contour
+                pass
 
             axi.axis("off")
 
@@ -334,7 +339,7 @@ if __name__ == "__main__":
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument("-v", "--version", help="Version number",
-                        type=str, default="png")
+                        type=str, default="5")
     args = parser.parse_args()
     version = args.version
 

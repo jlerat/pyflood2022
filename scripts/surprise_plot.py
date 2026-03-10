@@ -81,7 +81,7 @@ def set_logscale(ax):
     ax.set_yticklabels(yticklabs)
 
 
-def main(version, censored, marginal, hide_points, clear=False):
+def main(version, censored, marginal, hide_points, clean=False):
     #----------------------------------------------------------------------
     # Config
     #----------------------------------------------------------------------
@@ -123,7 +123,7 @@ def main(version, censored, marginal, hide_points, clear=False):
     fimg = froot / "images" / "surprise"
     fimg.mkdir(exist_ok=True, parents=True)
 
-    if clear:
+    if clean:
         for f in fimg.glob("*.*"):
             f.unlink()
 
@@ -350,7 +350,7 @@ if __name__ == "__main__":
         description="Surprise index figure",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("-v", "--version", help="Version number",
-                        type=str, default="png")
+                        type=str, default="5")
     parser.add_argument("-hp", "--hide_points", help="Show individual points",
                         action="store_true", default=False)
     args = parser.parse_args()

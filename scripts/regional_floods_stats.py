@@ -33,7 +33,7 @@ import matplotlib.pyplot as plt
 from surprise_plot import format_spines
 
 
-def main(version, clear=False):
+def main(version):
     #----------------------------------------------------------------------
     # Config
     #----------------------------------------------------------------------
@@ -68,9 +68,8 @@ def main(version, clear=False):
     fimg = froot / "images" / "regional_floods_stats"
     fimg.mkdir(exist_ok=True, parents=True)
 
-    if clear:
-        for f in fimg.glob("*.*"):
-            f.unlink()
+    for f in fimg.glob("*.*"):
+        f.unlink()
 
     #------------------------------------------------------------
     # Get data
@@ -232,8 +231,8 @@ if __name__ == "__main__":
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument("-v", "--version", help="Version number",
-                        type=str, default="png")
+                        type=str, default="5")
     args = parser.parse_args()
     version = args.version
 
-    main(version, True)
+    main(version)
