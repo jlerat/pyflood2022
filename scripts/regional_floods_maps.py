@@ -50,6 +50,8 @@ def main(version):
 
     fimg = froot / "images" / "regional_floods_maps"
     fimg.mkdir(exist_ok=True, parents=True)
+    for f in fimg.glob("*.*"):
+        f.unlink()
 
     fshp_coast = fsrc / "gis" / "australia.shp"
 
